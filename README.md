@@ -2,6 +2,8 @@
 
 Infer the polynomial coefficients and their covariance structure for fitting radio-astronometric callibrator spectrum.
 
+Author: Tim Molteno. tim@elec.ac.nz
+
 ## Install
 
     sudo pip3 install specfit
@@ -41,33 +43,11 @@ Now we can plot the data and show the results.
     print(names, stats)
     print(a_cov)
 
-## Usage
-
-    usage: tart2ms [-h] [--json JSON] [--ms MS] [--api API] [--catalog CATALOG]
-                [--vis VIS] [--pol2]
-
-    Generate measurement set from a JSON file from the TART radio telescope.
-
-    optional arguments:
-    -h, --help         show this help message and exit
-    --json JSON        Snapshot observation JSON file (visiblities, positions
-                        and more). (default: None)
-    --hdf HDF          Visibility hdf5 file (One minutes worth of visibility data). (default: None)
-    --ms MS            Output MS table name. (default: tart.ms)
-    --api API          Telescope API server URL. (default:
-                        https://tart.elec.ac.nz/signal)
-    --catalog CATALOG  Catalog API URL. (default:
-                        https://tart.elec.ac.nz/catalog)
-    --vis VIS          Use a local JSON file containing the visibilities for
-                        visibility data (default: None)
-    --pol2             Fake a second polarization. Some pipelines choke if there
-                        is only one. (default: False)
-
 
 ## TODO
 
-- Data Free inference code needs to be put in place.
+- Incorporate some ideas on using variances of parameters and constraints on flux uncertainties in place of requiring an explicit assumption of the sigma (in the case of data-free inference)
 
 ## Changelog
 
-- 0.1.0b1 first functioning release.
+- 0.1.0b2 First functioning release.
