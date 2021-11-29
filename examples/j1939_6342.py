@@ -3,24 +3,37 @@ import specfit as sf
 import matplotlib.pyplot as plt
 
 # Data from J.E. Reynolds for J1939-6342
-freq = [4.08e+08, 8.43e+08, 1.38e+09, 1.413e+09, 
-        1.612e+09, 1.66e+09, 1.665e+09, 2.295e+09,
-        2.378e+09, 4.8e+09, 4.8e+09, 4.835e+09,
-        4.85e+09, 8.415e+09, 8.42e+09,8.64e+09, 8.64e+09]
-data = [6.24,13.65,14.96,14.87,14.47,14.06,14.21,11.95,11.75, 5.81,
-        5.76, 5.72, 5.74, 2.99, 2.97, 2.81, 2.81]
-sigma = [0.312, 0.6825,0.748, 0.7435,0.7235,0.703, 0.7105,0.5975,0.5875,0.2905,
-         0.288, 0.286, 0.287, 0.1495,0.1485,0.1405,0.1405]
-nu0 = 1.4e9
+original_data = np.array(
+    [[0.408,  6.24, 0.312 ],
+     [0.843, 13.65, 0.6825],
+     [1.38 , 14.96, 0.748 ],
+     [1.413, 14.87, 0.7435],
+     [1.612, 14.47, 0.7235],
+     [1.66 , 14.06, 0.703 ],
+     [1.665, 14.21, 0.7105],
+     [2.295, 11.95, 0.5975],
+     [2.378, 11.75, 0.5875],
+     [4.8  ,  5.81, 0.2905],
+     [4.8  ,  5.76, 0.288 ],
+     [4.835,  5.72, 0.286 ],
+     [4.85 ,  5.74, 0.287 ],
+     [8.415,  2.99, 0.1495],
+     [8.42 ,  2.97, 0.1485],
+     [8.64 ,  2.81, 0.1405],
+     [8.64 ,  2.81, 0.1405]])
 
-fig, ax = sf.dataplot(plt, "J1939-6342", freq=freq, mu=data, sigma=sigma)
+freq_ghz, mu, sigma = original_data.T
+freq = freq_ghz*1e9
+nu0=1.4e9
 
 names, stats, a_cov, a_corr = \
     sf.data_inference("J1939-6342", 
-        freq=freq, mu=data, sigma=sigma, order=5, nu0=nu0)
+        freq=freq, mu=mu, sigma=sigma, 
+        order=5, nu0=nu0)
 
 a = stats[0] # Means
 
+fig, ax = sf.dataplot(plt, "J1939-6342", freq=freq, mu=mu, sigma=sigma)
 nu = np.linspace(freq[0], freq[-1], 100)
 S = sf.flux(nu, a, nu0=nu0)
 ax.plot(nu/1e9, S, label="polynomial fit")

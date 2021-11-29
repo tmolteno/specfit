@@ -7,7 +7,7 @@ develop:
 	sudo python3 setup.py develop
 
 example:
-	cd examples; python3 original_data.py
+	cd examples; python3 j1939_6342.py
 
 lint:
 	pylint --extension-pkg-whitelist=numpy --ignored-modules=numpy,tart_tools,dask,dask.array --extension-pkg-whitelist=astropy --extension-pkg-whitelist=dask specfit
