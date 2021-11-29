@@ -50,4 +50,4 @@ Now we can plot the data and show the results.
 
 ## Changelog
 
-- 0.1.0b2 First functioning release.
+- 0.1.0b3 First functioning release.

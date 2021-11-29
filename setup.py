@@ -11,7 +11,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='specfit',
-    version='0.1.0b2',
+    version='0.1.0b3',
     description='Infer polynomial spectral models with covariancess',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -23,7 +23,6 @@ setup(name='specfit',
     test_suite='nose.collector',
     tests_require=['nose'],
     packages=['specfit'],
-    scripts=['bin/specfit'],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Topic :: Scientific/Engineering",
