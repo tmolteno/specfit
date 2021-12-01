@@ -90,9 +90,9 @@ def get_random_sample(idata, chain=0):
 
 
 
-def full_column(name, idata):
+def full_column(name, idata, freq):
     a_cov, a_corr, names = chain_covariance(idata)
-    print(f"{name} & ")
+    print(f"{name} & {freq[0]/1e9}-{freq[-1]/1e9} & ")
     mean_2_latex(idata)
     print(f" & ")
     matrix_2_latex(a_cov, names)
