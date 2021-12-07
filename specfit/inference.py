@@ -72,7 +72,7 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)
 
-    return names, stats, a_cov, a_corr
+    return names, stats, a_cov, a_corr, _idata
 
 def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     """Infer a spectral polynomial covariance using data-free inference
