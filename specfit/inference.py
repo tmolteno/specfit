@@ -31,11 +31,12 @@ def data_inference(name, freq, mu, sigma, order, nu0):
         a list of strings representing the header columns
     """
     with pm.Model() as _model:
-        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5) for i in  range(order) ]
+        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0) for i in  range(order) ]
         _brightness = flux(np.array(freq), _a, nu0)
         _likelihood = pm.Normal("likelihood", mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
-    _idata = run_or_load(_model, fname = f"idata_{name}.nc")
-    
+    _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*1000)
+    print(pm.summary(_idata))
+
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)
 
