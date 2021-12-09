@@ -59,7 +59,7 @@ def vector_2_latex(a, names):
         columns = columns+'r'
 
     print(f"\\begin{{tabular}}{{rrr}}")
-    print(f"    $x$   & $\mu_x$    \\\\")
+    print(f"    $x$   & $\mu_x$ & $\sigma_x$   \\\\")
     print(f"    \\hline")
     for n, x in zip(clean_names, a):
         print(f"    {n} & {x[0] :6.4} & {x[1] :6.4}    \\\\")
@@ -92,7 +92,7 @@ def get_random_sample(idata, chain=0):
 
 def full_column(name, idata, freq):
     a_cov, a_corr, names = chain_covariance(idata)
-    print(f"{name} & {freq[0]/1e9}-{freq[-1]/1e9} & ")
+    print(f"{name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} & ")
     mean_2_latex(idata)
     print(f" & ")
     matrix_2_latex(a_cov, names)

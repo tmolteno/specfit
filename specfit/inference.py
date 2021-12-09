@@ -67,8 +67,6 @@ def data_inference(name, freq, mu, sigma, order, nu0):
         _likelihood = pm.Normal("likelihood", mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
     _idata = run_or_load(_model, fname = f"idata_{name}.nc")
     
-    summary = pm.summary(_idata)
-    print(summary.to_string())
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)
 
