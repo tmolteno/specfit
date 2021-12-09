@@ -70,3 +70,4 @@ Now we can plot the data and show the results.
 - 0.1.0b4 [In progress] Add the frequency range to the full_column output.
             Return the inference data to allow further processing
             Improved plotting and postprocessing.
+            Added posterior PDF helper plotting function (slow)

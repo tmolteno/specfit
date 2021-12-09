@@ -1,39 +1,8 @@
 import pymc3 as pm
 import numpy as np
 
-from .posterior_helper import run_or_load, get_stats, chain_covariance
+from .posterior_helper import run_or_load, get_stats, chain_covariance, flux
 
-def log_flux(w, logw, a):
-    logS = a[0]
-    for i in range(1,len(a)):
-        logS += a[i]*logw**i
-
-    return logS
-
-def flux(nu, a, nu0):
-    """Calculate flux from a polynomial model
-
-    Flux is modeled as a polynomial in log(nu/nu0).
-    
-    Parameters
-    ----------
-    nu : array or float
-        The frequency(ies) at which to calculate the flux
-    a : array-like
-        The coefficients of the polynomial model
-    nu0 : float
-        The normalizing frequency
-        
-    Returns
-    -------
-    array-like or float
-        The flux (in Jansky) at each of the supplied frequencies
-    """
-    w = nu/nu0
-    logw = np.log10(w)
-
-    logS = log_flux(w, logw, a)
-    return np.power(10, logS)
 
 
 def data_inference(name, freq, mu, sigma, order, nu0):

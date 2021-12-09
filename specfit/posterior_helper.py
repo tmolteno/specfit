@@ -7,6 +7,37 @@ import pymc3 as pm
 
 import matplotlib.pyplot as plt
 
+def log_flux(w, logw, a):
+    logS = a[0]
+    for i in range(1,len(a)):
+        logS += a[i]*logw**i
+
+    return logS
+
+def flux(nu, a, nu0):
+    """Calculate flux from a polynomial model
+
+    Flux is modeled as a polynomial in log(nu/nu0).
+    
+    Parameters
+    ----------
+    nu : array or float
+        The frequency(ies) at which to calculate the flux
+    a : array-like
+        The coefficients of the polynomial model
+    nu0 : float
+        The normalizing frequency
+        
+    Returns
+    -------
+    array-like or float
+        The flux (in Jansky) at each of the supplied frequencies
+    """
+    w = nu/nu0
+    logw = np.log10(w)
+
+    logS = log_flux(w, logw, a)
+    return np.power(10, logS)
 
 
 def row_2_table(row):
@@ -163,6 +194,26 @@ def dataplot(plt, name, freq, mu, sigma):
     return fig, ax
     
 
+
+def posterior_plot(plt, name, freq, idata, nu0):
+    fig, ax = plt.subplots()
+
+    min_freq = freq[0]
+    max_freq = freq[-1]
+
+    ax.set_xscale("log", nonpositive='clip')
+    ax.set_yscale("log", nonpositive='clip')
+    for n in np.geomspace(min_freq, max_freq, 50):
+        for i in range(100):
+            a = get_random_sample(idata)
+
+            ax.plot(n/1e9, flux(n, a, nu0), '.', c="k", alpha=0.05)
+
+    ax.set_xlabel("Frequency (GHz)")
+    ax.set_ylabel("Flux (Jy))")
+    ax.set_title(f"Posterior Spectrum PDF ({name})")
+    ax.grid(True);
+    return fig, ax
 
 if __name__=="__main__":
     a = np.array([[ 1.982e-04, -7.580e-06, -2.200e-05,  1.612e-05, -1.894e-06],
