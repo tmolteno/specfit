@@ -40,18 +40,18 @@ def flux(nu, a, nu0):
     return np.power(10, logS)
 
 
-def row_2_table(row):
-    print("    ", end='')
+def row_2_table(outfile, row):
+    print("    ", end='', file=outfile)
     cols = len(row)
     for j in range(cols):
         data = row[j]
         if isinstance(data, str):
-            print(f"{data} ", end='')
+            print(f"{data} ", end='', file=outfile)
         else:
-            print("{:6.4g} ".format(data), end='')
+            print("{:6.4g} ".format(data), end='', file=outfile)
         if j < cols-1:
-            print("& ", end='')
-    print("\\\\")
+            print("& ", end='', file=outfile)
+    print("\\\\", file=outfile)
 
 def clean_up_names(names):
     ret = []
@@ -61,7 +61,7 @@ def clean_up_names(names):
         ret.append(f"${newname}$")
     return ret
 
-def matrix_2_latex(a, names):
+def matrix_2_latex(outfile, a, names):
     clean_names = clean_up_names(names)
     a = np.array(a)
     cols = a.shape[0]
@@ -69,16 +69,16 @@ def matrix_2_latex(a, names):
     for i in range(cols):
         columns = columns+'r'
 
-    print(f"\\begin{{tabular}}{{{columns}}}")
-    print("    \\hline")
-    row_2_table(clean_names)
-    print("    \\hline")
+    print(f"\\begin{{tabular}}{{{columns}}}", file=outfile)
+    print("    \\hline", file=outfile)
+    row_2_table(outfile, clean_names)
+    print("    \\hline", file=outfile)
     for i in range(a.shape[1]):
-        row_2_table(a[:,i])
-    print("    \\hline")
-    print("\\end{tabular}")
+        row_2_table(outfile, a[:,i])
+    print("    \\hline", file=outfile)
+    print("\\end{tabular}", file=outfile)
 
-def vector_2_latex(a, names):
+def vector_2_latex(outfile, a, names):
     '''
         print a vector as a vertival table
     '''
@@ -89,12 +89,12 @@ def vector_2_latex(a, names):
     for i in range(cols):
         columns = columns+'r'
 
-    print(f"\\begin{{tabular}}{{rrr}}")
-    print(f"    $x$   & $\mu_x$ & $\sigma_x$   \\\\")
-    print(f"    \\hline")
+    print(f"\\begin{{tabular}}{{rrr}}", file=outfile)
+    print(f"    $x$   & $\mu_x$ & $\sigma_x$   \\\\", file=outfile)
+    print(f"    \\hline", file=outfile)
     for n, x in zip(clean_names, a):
-        print(f"    {n} & {x[0] :6.4} & {x[1] :6.4}    \\\\")
-    print("\\end{tabular}")
+        print(f"    {n} & {x[0] :6.4} & {x[1] :6.4}    \\\\", file=outfile)
+    print("\\end{tabular}", file=outfile)
 
 
 def get_stats(idata):
@@ -107,10 +107,10 @@ def idata_2_latex(idata):
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
     matrix_2_latex(data, names)
 
-def mean_2_latex(idata):
+def mean_2_latex(outfile, idata):
     names = [x for x in idata.posterior.mean()]
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
-    vector_2_latex(data, names)
+    vector_2_latex(outfile, data, names)
 
 def get_random_sample(idata, chain=0):
     names = [x for x in idata.posterior.mean()]
@@ -121,15 +121,21 @@ def get_random_sample(idata, chain=0):
 
 
 
-def full_column(name, idata, freq):
+def full_column(outfile, all_names, idata, freq):
     a_cov, a_corr, names = chain_covariance(idata)
-    print(f"{name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} & ")
-    mean_2_latex(idata)
-    print(f" & ")
-    matrix_2_latex(a_cov, names)
-    print(f" & ")
-    matrix_2_latex(a_corr, names)
-    print("  \\\\  \\hline")
+    
+    name_list = "\\begin{tabular}{l} " + all_names[0]
+    for n in all_names[1:]:
+        name_list = name_list + f" \\\\ {n} "
+    name_list = name_list + " \\end{tabular}"
+    
+    print(f"{name_list} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} & ", file=outfile)
+    mean_2_latex(outfile, idata)
+    print(f" & ", file=outfile)
+    matrix_2_latex(outfile, a_cov, names)
+    print(f" & ", file=outfile)
+    matrix_2_latex(outfile, a_corr, names)
+    print("  \\\\  \\hline", file=outfile)
 
 def chain_covariance(idata):
     names = [x for x in idata.posterior.mean()]
