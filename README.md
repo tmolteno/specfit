@@ -8,6 +8,10 @@ Author: Tim Molteno. tim@elec.ac.nz
 
     sudo pip3 install specfit
 
+develop
+
+    pip3 install -e .
+
 ## Examples
 
 Here is an example. This code is in the examples directory.
