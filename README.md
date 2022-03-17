@@ -72,3 +72,4 @@ Now we can plot the data and show the results.
             Improved plotting and postprocessing.
             Added posterior PDF helper plotting function (slow)
             Use different tuning depending on polynomial order
+            Output to a file, including lists of alternate names
