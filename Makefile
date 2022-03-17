@@ -4,7 +4,7 @@
 # in this directory.
 
 develop:
-	sudo python3 setup.py develop
+	python3 setup.py develop
 
 example:
 	cd examples; python3 j1939_6342.py
