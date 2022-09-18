@@ -11,7 +11,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='specfit',
-    version='0.1.0b4',
+    version='0.2.0b1',
     description='Infer polynomial spectral models with covariancess',
     long_description=readme,
     long_description_content_type="text/markdown",
