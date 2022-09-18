@@ -4,7 +4,7 @@
 # in this directory.
 
 develop:
-	python3 setup.py develop
+	pip install -e .
 
 example:
 	cd examples; python3 j1939_6342.py

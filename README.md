@@ -1,6 +1,6 @@
 # Specfit 
 
-Infer the polynomial coefficients and their covariance structure for fitting radio-astronometric callibrator spectrum.
+Infer polynomial coefficients and their covariance structure for fitting radio-astronometric callibrator spectra.
 
 Author: Tim Molteno. tim@elec.ac.nz
 
