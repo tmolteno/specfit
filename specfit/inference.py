@@ -66,6 +66,6 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     fake_data = flux(f, a, nu0) + rng.normal(loc=np.zeros_like(f), scale=sigma)
     
     # Now do the bayesian inference of the polynomial parameters.
-    names, stats, a_cov, a_corr = data_inference(name, f, fake_data, sigma=np.ones_like(f)*sigma, order=a.shape[0], nu0=nu0)
+    names, stats, a_cov, a_corr, idata = data_inference(name, f, fake_data, sigma=np.ones_like(f)*sigma, order=a.shape[0], nu0=nu0)
 
     return names, stats, a_cov, a_corr, f, fake_data

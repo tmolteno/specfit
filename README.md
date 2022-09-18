@@ -43,7 +43,7 @@ Here is an example. This code is in the examples directory.
     freq_ghz, mu, sigma = original_data.T
     freq = freq_ghz*1e9
 
-    names, stats, a_cov, a_corr = \
+    names, stats, a_cov, a_corr, idata = \
         sf.spectral_inference("J1939-6342", 
             freq=nu, mu=data, sigma=sigma, order=4, nu0=1.4e9)
 
@@ -70,6 +70,7 @@ Now we can plot the data and show the results.
 
 ## Changelog
 
+- 0.2.0b3 Fix examples, move to github automation for release information.
 - 0.1.0b3 First functioning release.
 - 0.1.0b4 [In progress] Add the frequency range to the full_column output.
             Return the inference data to allow further processing

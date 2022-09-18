@@ -26,7 +26,7 @@ freq_ghz, mu, sigma = original_data.T
 freq = freq_ghz*1e9
 nu0=1.4e9
 
-names, stats, a_cov, a_corr = \
+names, stats, a_cov, a_corr, idata = \
     sf.data_inference("J1939-6342", 
         freq=freq, mu=mu, sigma=sigma, 
         order=5, nu0=nu0)
