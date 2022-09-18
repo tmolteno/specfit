@@ -8,7 +8,9 @@ message: >-
   metadata from this file.
 type: software
 authors:
-  - given-names: Timothy C. A. Molteno
+  - given-names: Timothy C. A.
     email: tim@physics.otago.ac.nz
     affiliation: 'Department of Physics, University of Otago'
     orcid: 'https://orcid.org/0000-0002-2022-0380'
+    family-names: Molteno
+
