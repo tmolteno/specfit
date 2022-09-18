@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+title: >-
+  Specfit: Paclage for inferring the polynomial
+  coefficients and their covariance structure for
+  radio-astronometric callibrator spectra
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Timothy C. A. Molteno
+    email: tim@physics.otago.ac.nz
+    affiliation: 'Department of Physics, University of Otago'
+    orcid: 'https://orcid.org/0000-0002-2022-0380'
