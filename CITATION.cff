@@ -13,4 +13,9 @@ authors:
     affiliation: 'Department of Physics, University of Otago'
     orcid: 'https://orcid.org/0000-0002-2022-0380'
     family-names: Molteno
-
+identifiers:
+  - type: url
+    value: 'https://github.com/tmolteno/specfit'
+    description: Github Page
+repository-code: 'https://github.com/tmolteno/specfit'
+repository-artifact: 'https://pypi.org/project/specfit/'
