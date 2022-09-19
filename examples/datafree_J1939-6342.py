@@ -7,6 +7,20 @@ original_polynomial = [-30.7667,  26.4908, -7.0977, 0.605334]
 original_nu0 = 1.0e6
 
 
+sigma = 0.5
+
+fig, ax = plt.subplots()
+ax.set_xscale("log", nonpositive='clip')
+ax.set_yscale("log", nonpositive='clip')
+ax.grid(True);
+
+nu = np.linspace(0.5e9, 10e9, 100)
+S = sf.flux(nu, original_polynomial, nu0=original_nu0)
+ax.plot(nu/1e9, S, label="polynomial fit")
+ax.legend()
+fig.tight_layout()
+plt.show()
+
 names, stats, a_cov, a_corr, f, fake_data = \
     sf.datafree_inference(
                         name="J1939-6342",  
