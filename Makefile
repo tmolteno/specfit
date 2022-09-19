@@ -7,7 +7,7 @@ develop:
 	pip install -e .
 
 example:
-	cd examples; python3 j1939_6342.py
+	cd examples; python3 raw_j1939_6342.py
 
 lint:
 	pylint --extension-pkg-whitelist=numpy --ignored-modules=numpy,tart_tools,dask,dask.array --extension-pkg-whitelist=astropy --extension-pkg-whitelist=dask specfit

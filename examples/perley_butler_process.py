@@ -36,6 +36,8 @@ def process(outfile, key, _S, _sigma, _frequency, order):
 
 
 if False:
+    
+    # This code is for the 2013 perley butler catalog
     data = pd.read_csv('perley_butler_ascii.txt', skiprows=5, skipfooter=1, skipinitialspace=True)
 
     print(data)

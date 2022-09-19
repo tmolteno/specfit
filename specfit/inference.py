@@ -16,7 +16,7 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     name : str
         A unique key to identify this model. This is used to cache results of the inference.
     freq : array-like
-        The frequencies that the measurements are made
+        The frequencies at which  the measurements are made (Hz)
     mu : array-like
         The intensities (in Jansky) for each measurement
     sigma : array-like
@@ -54,7 +54,7 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     name : str
         A unique key to identify this model. This is used to cache results of the inference.
     freq : array-like
-        The range of frequencies over which this inference should be made - in other words
+        The range of frequencies over which this inference should be made (Hz) - in other words
         
     """
     f = np.geomspace(freq_min, freq_max, nfreq)
@@ -63,9 +63,10 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
 
     ## Create fake data for the data-free inference step
     
-    fake_data = flux(f, a, nu0) + rng.normal(loc=np.zeros_like(f), scale=sigma)
+    fake_data = flux(f, np.array(a), nu0) + rng.normal(loc=np.zeros_like(f), scale=sigma)
     
+    order = np.array(a).shape[0]-1
     # Now do the bayesian inference of the polynomial parameters.
-    names, stats, a_cov, a_corr, idata = data_inference(name, f, fake_data, sigma=np.ones_like(f)*sigma, order=a.shape[0], nu0=nu0)
+    names, stats, a_cov, a_corr, idata = data_inference(name, f, fake_data, sigma=np.ones_like(f)*sigma, order=order, nu0=nu0)
 
     return names, stats, a_cov, a_corr, f, fake_data
