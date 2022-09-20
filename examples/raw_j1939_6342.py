@@ -29,7 +29,7 @@ nu0=1.4e9
 names, stats, a_cov, a_corr, idata = \
     sf.data_inference("J1939-6342", 
         freq=freq, mu=mu, sigma=sigma, 
-        order=5, nu0=nu0)
+        order=4, nu0=nu0)
 
 a = stats[0] # Means
 
