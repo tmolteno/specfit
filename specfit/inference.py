@@ -1,7 +1,8 @@
 import pymc3 as pm
 import numpy as np
 
-from .posterior_helper import run_or_load, get_stats, chain_covariance, flux
+from .posterior_helper import run_or_load, get_stats, chain_covariance
+from .posterior_helper import Tflux as flux
 
 
 
@@ -31,9 +32,12 @@ def data_inference(name, freq, mu, sigma, order, nu0):
         a list of strings representing the header columns
     """
     with pm.Model() as _model:
-        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=3.5, testval=0.1) for i in  range(order) ]
+        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0.1) for i in  range(order) ]
         _brightness = flux(np.array(freq), _a, nu0)
-        _likelihood = pm.Normal("likelihood", mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
+        
+        ''' Use a StudentT likelihood to deal with outliers 
+        '''
+        _likelihood = pm.StudentT("likelihood", nu=3, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
     _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
 
     a_cov, a_corr, names = chain_covariance(_idata)

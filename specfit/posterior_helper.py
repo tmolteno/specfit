@@ -5,6 +5,9 @@ import numpy as np
 import arviz as az
 import pymc3 as pm
 
+import theano.tensor as T
+from theano import function
+
 import matplotlib.pyplot as plt
 
 def log_flux(w, logw, a):
@@ -36,7 +39,34 @@ def flux(nu, a, nu0):
     w = nu/nu0
     logw = np.log10(w)
 
-    logS = log_flux(w, logw, a)
+    logS = np.maximum(log_flux(w, logw, a), -500.0)
+    
+    return np.power(10, logS)
+
+def Tflux(nu, a, nu0):
+    """Calculate flux from a polynomial model
+
+    Flux is modeled as a polynomial in log(nu/nu0).
+    
+    Parameters
+    ----------
+    nu : array or float
+        The frequency(ies) at which to calculate the flux
+    a : array-like
+        The coefficients of the polynomial model
+    nu0 : float
+        The normalizing frequency
+        
+    Returns
+    -------
+    array-like or float
+        The flux (in Jansky) at each of the supplied frequencies
+    """
+    w = nu/nu0
+    logw = np.log10(w)
+
+    logS = T.maximum(log_flux(w, logw, a), -500.0)
+    
     return np.power(10, logS)
 
 
@@ -152,8 +182,9 @@ def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, ca
         with mcmc_model:
             #approximation = pm.fit(n=n_samples, method='fullrank_advi') # Reutrns 
             #ret = approximation.sample(n_samples)
-            start = pm.find_MAP()
-            ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, start=start, return_inferencedata=True, discard_tuned_samples=True)
+            # start = pm.find_MAP()
+            # ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, start=start, return_inferencedata=True, discard_tuned_samples=True)
+            ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, return_inferencedata=True, discard_tuned_samples=True)
         if cache:
             ret.to_netcdf(fname);
     return ret
@@ -208,13 +239,22 @@ def posterior_plot(plt, name, freq, idata, nu0):
     min_freq = freq[0]
     max_freq = freq[-1]
 
+    
+    dataset = []
+    freq = np.geomspace(min_freq, max_freq, 30)
+    for n in freq:
+        samples = np.array([flux(n, get_random_sample(idata), nu0) for i in range(100)])
+        dataset.append(samples)
+    #dataset = np.array(dataset)
+    
+    ax.plot(freq, dataset, '.', c="k", alpha=0.05)
+        
+    # ax.violinplot(dataset=dataset, positions=freq) 
+    #                   showmeans=False, showmedians=False, showextrema=False,
+    #                   vert=True)
+
     ax.set_xscale("log", nonpositive='clip')
     ax.set_yscale("log", nonpositive='clip')
-    for n in np.geomspace(min_freq, max_freq, 50):
-        for i in range(100):
-            a = get_random_sample(idata)
-
-            ax.plot(n/1e9, flux(n, a, nu0), '.', c="k", alpha=0.05)
 
     ax.set_xlabel("Frequency (GHz)")
     ax.set_ylabel("Flux (Jy))")
