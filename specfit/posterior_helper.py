@@ -244,6 +244,7 @@ def posterior_plot(plt, name, freq, idata, nu0):
     
     num_freqs = 30
     freq = np.geomspace(min_freq, max_freq, num_freqs)
+    bar_widths = np.geomspace(min_freq, max_freq, num_freqs+1)[0:-1] - np.geomspace(min_freq, max_freq, num_freqs+1)[1:]
     for n in freq:
         samples = np.array([flux(n, get_random_sample(idata), nu0) for i in range(200)])
         dataset.append(samples)
@@ -251,9 +252,12 @@ def posterior_plot(plt, name, freq, idata, nu0):
     
     #ax.plot(freq, dataset, '.', c="k", alpha=0.05)
         
-    ax.violinplot(dataset=dataset, positions=freq, widths = 2*freq/num_freqs,
-                      showmeans=False, showmedians=True, showextrema=True)
+    vp = ax.violinplot(dataset=dataset, positions=freq, widths = bar_widths,
+                      showmeans=False, showmedians=False, showextrema=False)
                       #vert=True)
+    # styling:
+    for body in vp['bodies']:
+        body.set_alpha(0.9)
 
     ax.set_xscale("log", nonpositive='clip')
     ax.set_yscale("log", nonpositive='clip')

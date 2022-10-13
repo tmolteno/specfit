@@ -33,8 +33,9 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     """
     with pm.Model() as _model:
         _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0.1) for i in  range(order) ]
-        _brightness = flux(np.array(freq), _a, nu0)
         
+        _x = pm.Data('frequencies', freq) # a data container, can be changed
+        _brightness = flux(_x, _a, nu0)
         ''' Use a StudentT likelihood to deal with outliers 
         '''
         _likelihood = pm.StudentT("likelihood", nu=3, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
@@ -43,7 +44,10 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)
 
-    return names, stats, a_cov, a_corr, _idata
+    # Do some posterior predictive sampliing
+    
+    
+    return names, stats, a_cov, a_corr, _idata, _model
 
 def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     """Infer a spectral polynomial covariance using data-free inference
