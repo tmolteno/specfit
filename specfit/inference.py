@@ -4,7 +4,30 @@ import numpy as np
 from .posterior_helper import run_or_load, get_stats, chain_covariance
 from .posterior_helper import Tflux as flux
 
+def get_model(name, freq, mu, sigma, order, nu0):
+    with pm.Model() as _model:
+        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0.1) for i in  range(order) ]
+        
+        _x = pm.Data('frequencies', freq) # a data container, can be changed
+        _brightness = flux(_x, _a, nu0)
+        ''' Use a StudentT likelihood to deal with outliers 
+        '''
+        _likelihood = pm.StudentT("likelihood", nu=3, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
+    return _model
 
+def marginal_likelihood(name, freq, mu, sigma, nu0):
+
+    ret = []
+    for _ord in range(2,7):
+        _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
+        with _model:
+            _chain = pm.sample_smc(5000, chains=4)
+            _bic = np.mean(_chain.report.log_marginal_likelihood)
+        print(f"Log Marginal Likelihood: {_ord}:  {_bic}")
+        
+        ret.append([_ord, _bic])
+    
+    return np.array(ret)
 
 def data_inference(name, freq, mu, sigma, order, nu0):
     """Infer a spectral polynomial from original measurements
@@ -31,23 +54,13 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     list
         a list of strings representing the header columns
     """
-    with pm.Model() as _model:
-        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0.1) for i in  range(order) ]
-        
-        _x = pm.Data('frequencies', freq) # a data container, can be changed
-        _brightness = flux(_x, _a, nu0)
-        ''' Use a StudentT likelihood to deal with outliers 
-        '''
-        _likelihood = pm.StudentT("likelihood", nu=3, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
-    _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
+    _model = get_model(name, freq, mu, sigma, order, nu0=nu0)
+    _idata, _bic = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
 
-    a_cov, a_corr, names = chain_covariance(_idata)
-    stats, names = get_stats(_idata)
-
-    # Do some posterior predictive sampliing
+    a_cov, a_corr, names = chain_covariance(best_idata)
+    stats, names = get_stats(best_idata)
     
-    
-    return names, stats, a_cov, a_corr, _idata, _model
+    return names, stats, a_cov, a_corr, best_idata, best_model
 
 def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     """Infer a spectral polynomial covariance using data-free inference

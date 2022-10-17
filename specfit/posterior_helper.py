@@ -175,6 +175,7 @@ def chain_covariance(idata):
     return np.cov(a), np.corrcoef(a), names
 
 
+
 def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, cache=False):
     if cache is True and os.path.exists(fname):
         ret = az.from_netcdf(fname)
