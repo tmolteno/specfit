@@ -67,9 +67,12 @@ Now we can plot the data and show the results.
 ## TODO
 
 - Incorporate some ideas on using variances of parameters and constraints on flux uncertainties in place of requiring an explicit assumption of the sigma (in the case of data-free inference)
+- Use smoothness as a prior (rather than model-order).
 
 ## Changelog
 
+- 0.2.0b4 Include a separate function (marginal_likelihood) for estimating the marginal likelihood using SMC
+          Change the likelihood to use a Student's t distribution for robustness.
 - 0.2.0b3 Fix examples, move to github automation for release information.
 - 0.1.0b3 First functioning release.
 - 0.1.0b4 [In progress] Add the frequency range to the full_column output.
