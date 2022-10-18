@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import specfit as sf
+import pymc3 as pm
 
 def cleanup(_S, _sigma, _freq):
     S = np.array(_S)
@@ -10,6 +11,35 @@ def cleanup(_S, _sigma, _freq):
     good = np.where(np.isnan(S) == False)
     return S[good], sigma[good], freq[good]
 
+    
+def process_bic(outfile, key, _S, _sigma, _frequency, order):
+    global full_names
+    official_name = full_names[key][0]
+    print(f"%%%%% Processing {key}", file=outfile, flush=True)
+    nu0 = 1.4e9
+    S, sigma, freq = cleanup(_S, _sigma, _frequency)
+    
+    bic = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
+
+    print("""
+\begin{table}
+	\centering
+	\caption{SMC estimates of the marginal likelihood $B_n$, of the model vs order $n$ for various sources.}
+	\label{tab:marginal_likelihood}
+\begin{tabular}{r|rrrrrrr}
+    \hline
+    Source & order &  $B_2$ & $B_3$ & $B_4$ & $B_5$ & $B_6$ \\
+""", file=outfile)
+    print(f"{official_name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} &  {order}", file=outfile)
+    for b in bic:
+        _o, _b = b
+        print(f"&  {_b :5.2f} ", file=outfile, end='')
+    print('\\\\', file=outfile)
+    print("""
+\end{tabular}
+\end{table}
+""", file=outfile)
+
 
 def process(outfile, key, _S, _sigma, _frequency, order):
     global full_names
@@ -17,17 +47,35 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     print(f"%%%%% Processing {key} order={order}", file=outfile, flush=True)
     nu0 = 1.4e9
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
-    names, stats, a_cov, a_corr, idata = sf.data_inference(key, freq, S, sigma, order=order, nu0=nu0)
+    
+    bic = sf.data_inference(key, freq, S, sigma, nu0=nu0, order=order)
+
+    names, stats, a_cov, a_corr, idata, mcmc_model = sf.data_inference(key, freq, S, sigma, order=order, nu0=nu0)
     sf.full_column(outfile, full_names[key], idata, np.array(freq))
     #print(pm.summary(idata))
     fig, ax = sf.dataplot(plt, official_name, freq, S, sigma)
     a, da = stats
     nu = np.geomspace(freq[0], freq[-1], 100)
     ax.plot(nu/1e9, sf.flux(nu, a, nu0), label='Polynomial model')
+
+
+    with mcmc_model:
+        #pm.set_data({'frequencies': nu})
+        ppc = pm.sample_posterior_predictive(idata, var_names=['likelihood', 'frequencies'])
+    posterior_pred = ppc['likelihood']
+    posterior_freq = ppc['frequencies'].mean(axis=0)
+    y_mean = posterior_pred.mean(axis=0)
+    y_std = posterior_pred.std(axis=0)
+    
+    ax.plot(posterior_freq/1e9, y_mean, label='Posterior mean')
+    # ax.plot(nu/1e9, sf.flux(nu, y_mean, nu0), label='Posterior flux mean')
+    ax.fill_between(posterior_freq/1e9, y_mean - 3*y_std, y_mean + 3*y_std, alpha=0.33, label='Uncertainty Interval ($\mu\pm3\sigma$)')
+
     ax.legend()
     #plt.show()
     fig.savefig(f"./output/{key}_data.pdf")
     plt.close(fig)
+    
     
     fig, ax = sf.posterior_plot(plt, official_name, freq, idata, nu0)
     fig.savefig(f"./output/{key}_pdf.pdf")
@@ -125,6 +173,12 @@ full_names = {
     '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
 }
 
+with open('perley_butler_bic.tex', 'w') as outfile:
+    for calibrator in stars:
+        mu = data[calibrator]
+        sigma = mu*(err / 100)
+        process_bic(outfile, calibrator, mu, sigma, frequency, orders[calibrator])
+        
 with open('perley_butler_2017.tex', 'w') as outfile:
     for calibrator in stars:
         mu = data[calibrator]

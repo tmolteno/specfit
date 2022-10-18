@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: >-
-  Specfit: Paclage for inferring the polynomial
+  Specfit: Package for inferring the polynomial
   coefficients and their covariance structure for
   radio-astronometric callibrator spectra
 message: >-
