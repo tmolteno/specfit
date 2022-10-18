@@ -21,7 +21,7 @@ def process_bic(outfile, key, _S, _sigma, _frequency, order):
     
     bic = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
 
-    bmax = np.max(bic, axis=1)
+    bmax = np.max(bic[:,1])
     
     print(f"{official_name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} &  {order}", file=outfile)
     for b in bic:
