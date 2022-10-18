@@ -12,7 +12,7 @@ def get_model(name, freq, mu, sigma, order, nu0):
         _brightness = flux(_x, _a, nu0)
         ''' Use a StudentT likelihood to deal with outliers 
         '''
-        _likelihood = pm.StudentT("likelihood", nu=3, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
+        _likelihood = pm.StudentT("likelihood", nu=5, mu=_brightness, sigma=np.array(sigma), observed=np.array(mu))
     return _model
 
 def marginal_likelihood(name, freq, mu, sigma, nu0):
