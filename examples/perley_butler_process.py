@@ -165,25 +165,26 @@ full_names = {
     '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
 }
 
-with open('perley_butler_bic.tex', 'w') as outfile:
-    print("""
-\\begin{table}
-	\\centering
-	\\caption{SMC estimates of the marginal likelihood $B_n$, of the model vs order $n$ for various sources.}
-	\\label{tab:marginal_likelihood}
-\\begin{tabular}{r|rrrrrrr}
-    \\hline
-    Source & order &  $B_2$ & $B_3$ & $B_4$ & $B_5$ & $B_6$ \\\\
-    \\hline
-""", file=outfile)
-    for calibrator in stars:
-        mu = data[calibrator]
-        sigma = mu*(err / 100)
-        process_bic(outfile, calibrator, mu, sigma, frequency, orders[calibrator])
-    print("""
-\\end{tabular}
-\\end{table}
-""", file=outfile)
+if False:
+    with open('perley_butler_bic.tex', 'w') as outfile:
+        print("""
+    \\begin{table}
+        \\centering
+        \\caption{SMC estimates of the marginal likelihood $B_n$, of the model vs order $n$ for various sources.}
+        \\label{tab:marginal_likelihood}
+    \\begin{tabular}{r|rrrrrrr}
+        \\hline
+        Source & order &  $B_2$ & $B_3$ & $B_4$ & $B_5$ & $B_6$ \\\\
+        \\hline
+    """, file=outfile)
+        for calibrator in stars:
+            mu = data[calibrator]
+            sigma = mu*(err / 100)
+            process_bic(outfile, calibrator, mu, sigma, frequency, orders[calibrator])
+        print("""
+    \\end{tabular}
+    \\end{table}
+    """, file=outfile)
 
 with open('perley_butler_2017.tex', 'w') as outfile:
     for calibrator in stars:

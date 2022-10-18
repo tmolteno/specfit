@@ -1,8 +1,24 @@
 import pymc3 as pm
 import numpy as np
 
-from .posterior_helper import run_or_load, get_stats, chain_covariance
+from .posterior_helper import get_stats, chain_covariance
 from .posterior_helper import Tflux as flux
+
+
+def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, cache=False):
+    if cache is True and os.path.exists(fname):
+        ret = az.from_netcdf(fname)
+    else:
+        with mcmc_model:
+            #approximation = pm.fit(n=n_samples, method='fullrank_advi') # Reutrns 
+            #ret = approximation.sample(n_samples)
+            # start = pm.find_MAP()
+            # ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, start=start, return_inferencedata=True, discard_tuned_samples=True)
+            ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, return_inferencedata=True, discard_tuned_samples=True)
+        if cache:
+            ret.to_netcdf(fname);
+    return ret
+
 
 def get_model(name, freq, mu, sigma, order, nu0):
     with pm.Model() as _model:
@@ -55,12 +71,12 @@ def data_inference(name, freq, mu, sigma, order, nu0):
         a list of strings representing the header columns
     """
     _model = get_model(name, freq, mu, sigma, order, nu0=nu0)
-    _idata, _bic = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
+    _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
 
-    a_cov, a_corr, names = chain_covariance(best_idata)
-    stats, names = get_stats(best_idata)
+    a_cov, a_corr, names = chain_covariance(_idata)
+    stats, names = get_stats(_idata)
     
-    return names, stats, a_cov, a_corr, best_idata, best_model
+    return names, stats, a_cov, a_corr, _idata, _model
 
 def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     """Infer a spectral polynomial covariance using data-free inference
