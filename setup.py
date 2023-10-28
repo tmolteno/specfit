@@ -11,7 +11,7 @@ with open('README.md') as f:
     readme = f.read()
 
 setup(name='specfit',
-    version='0.2.0b4',
+    version='0.2.0b5',
     description='Infer polynomial spectral models with covariancess',
     long_description=readme,
     long_description_content_type="text/markdown",
@@ -19,7 +19,7 @@ setup(name='specfit',
     author='Tim Molteno',
     author_email='tim@elec.ac.nz',
     license='GPLv3',
-    install_requires=['numpy', 'h5py', 'pymc3', 'arviz', 'matplotlib'],
+    install_requires=['h5py', 'pymc', 'arviz', 'matplotlib'],
     test_suite='nose.collector',
     tests_require=['nose'],
     packages=['specfit'],

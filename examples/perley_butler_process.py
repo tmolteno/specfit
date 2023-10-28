@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import specfit as sf
-import pymc3 as pm
+import pymc as pm
 
 def cleanup(_S, _sigma, _freq):
     S = np.array(_S)
@@ -11,12 +11,13 @@ def cleanup(_S, _sigma, _freq):
     good = np.where(np.isnan(S) == False)
     return S[good], sigma[good], freq[good]
 
-    
+NU_0 = 1.0e9
+
 def process_bic(outfile, key, _S, _sigma, _frequency, order):
     global full_names
     official_name = full_names[key][0]
     print(f"%%%%% Processing {key}", file=outfile, flush=True)
-    nu0 = 1.4e9
+    nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
     
     bic = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
@@ -37,7 +38,7 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     global full_names
     official_name = full_names[key][0]
     print(f"%%%%% Processing {key} order={order}", file=outfile, flush=True)
-    nu0 = 1.4e9
+    nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
     
     bic = sf.data_inference(key, freq, S, sigma, nu0=nu0, order=order)
@@ -53,11 +54,21 @@ def process(outfile, key, _S, _sigma, _frequency, order):
 
     with mcmc_model:
         #pm.set_data({'frequencies': nu})
-        ppc = pm.sample_posterior_predictive(idata, var_names=['likelihood', 'frequencies'])
-    posterior_pred = ppc['likelihood']
-    posterior_freq = ppc['frequencies'].mean(axis=0)
-    y_mean = posterior_pred.mean(axis=0)
-    y_std = posterior_pred.std(axis=0)
+        ppc = pm.sample_posterior_predictive(idata, return_inferencedata=False,
+                                             var_names=['likelihood', 'frequencies'])
+        
+    print(ppc.keys())
+    posterior_pred = ppc['likelihood'].mean(axis=0)   # Average over the chains
+    print(f"posterior pred: {posterior_pred.shape}")
+    
+    posterior_freq = ppc['frequencies'].mean(axis=0).mean(axis=0)    # Average over the chains, then over the samples
+    print(f"posterior freq: {posterior_freq.shape}")
+    
+    y_mean = posterior_pred.mean(axis=0)    # Average over samples
+    y_std = posterior_pred.std(axis=0)      # Std over samples
+    
+    print(f"y_mean: {y_mean.shape}")
+    print(f"y_std: {y_std.shape}")
     
     ax.plot(posterior_freq/1e9, y_mean, label='Posterior mean')
     # ax.plot(nu/1e9, sf.flux(nu, y_mean, nu0), label='Posterior flux mean')

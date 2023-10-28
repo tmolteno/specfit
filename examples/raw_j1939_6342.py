@@ -24,33 +24,36 @@ original_data = np.array(
 
 freq_ghz, mu, sigma = original_data.T
 freq = freq_ghz*1e9
-nu0=1.4e9
+nu0=1.0e9
 
-names, stats, a_cov, a_corr, idata = \
-    sf.data_inference("J1939-6342", 
-        freq=freq, mu=mu, sigma=sigma, 
-        order=4, nu0=nu0)
+if False:
+    names, stats, a_cov, a_corr, idata, model = \
+        sf.data_inference("J1939-6342", 
+            freq=freq, mu=mu, sigma=sigma, 
+            order=4, nu0=nu0)
 
-a = stats[0] # Means
+    a = stats[0] # Means
 
-fig, ax = sf.dataplot(plt, "J1939-6342", freq=freq, mu=mu, sigma=sigma)
-nu = np.linspace(freq[0], freq[-1], 100)
-S = sf.flux(nu, a, nu0=nu0)
-ax.plot(nu/1e9, S, label="polynomial fit")
-ax.legend()
-fig.tight_layout()
-plt.show()
+    fig, ax = sf.dataplot(plt, "J1939-6342", freq=freq, mu=mu, sigma=sigma)
+    nu = np.linspace(freq[0], freq[-1], 100)
+    S = sf.flux(nu, a, nu0=nu0)
+    ax.plot(nu/1e9, S, label="polynomial fit")
+    ax.legend()
+    fig.tight_layout()
+    plt.show()
 
-print(f"Variables: {names}")
-print(f"Means: {stats[0]}")
-print(f"SDev: {stats[1]}")
-print(f"Covariance Matrix:\n{np.array2string(a_cov, separator=',', precision=4)}")
-print(f"Correlation Matrix:\n{np.array2string(a_corr, separator=',', precision=4)}")
+    print(f"Variables: {names}")
+    print(f"Means: {stats[0]}")
+    print(f"SDev: {stats[1]}")
+    print(f"Covariance Matrix:\n{np.array2string(a_cov, separator=',', precision=4)}")
+    print(f"Correlation Matrix:\n{np.array2string(a_corr, separator=',', precision=4)}")
 
 
 ## Now do polynomial inference from the data again.
 
-names2, stats2, a_cov2, a_corr2, f, fake_data = sf.datafree_inference('J1939-6342-poly', freq_min=freq[0], freq_max=freq[-1], nfreq=20, sigma=0.5, a=stats[0], nu0=nu0)
+names2, stats2, a_cov2, a_corr2, f, fake_data = sf.datafree_inference('J1939-6342-poly', freq_min=freq[0], freq_max=freq[-1], nfreq=20, sigma=0.5, a=[ 1.17029511,  0.24627929, -1.642271,    0.59897049], nu0=nu0)
+
+print(fake_data)
 
 fig, ax = plt.subplots()
 a = stats2[0] # Means

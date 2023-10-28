@@ -1,8 +1,9 @@
-import pymc3 as pm
+import pymc as pm
 import numpy as np
 
 from .posterior_helper import get_stats, chain_covariance
 from .posterior_helper import Tflux as flux
+from .posterior_helper import flux as num_flux
 
 
 def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, cache=False):
@@ -22,9 +23,9 @@ def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, ca
 
 def get_model(name, freq, mu, sigma, order, nu0):
     with pm.Model() as _model:
-        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, testval=0.1) for i in  range(order) ]
+        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, initval=0.1) for i in  range(order) ]
         
-        _x = pm.Data('frequencies', freq) # a data container, can be changed
+        _x = pm.MutableData('frequencies', freq) # a data container, can be changed
         _brightness = flux(_x, _a, nu0)
         ''' Use a StudentT likelihood to deal with outliers 
         '''
@@ -92,20 +93,20 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
         A unique key to identify this model. This is used to cache results of the inference.
     freq : array-like
         The range of frequencies over which this inference should be made (Hz) - in other words
+    freq : array-like
+        The range of frequencies over which this inference should be made (Hz) - in other words
         
     """
     f = np.geomspace(freq_min, freq_max, nfreq)
-    
+    flux_data = (num_flux(f, np.array(a), nu0))
     rng = np.random.default_rng(12345)
-
+    noise = rng.normal(loc=np.zeros_like(f), scale=sigma)
     ## Create fake data for the data-free inference step
-    
-    fake_data = flux(f, np.array(a), nu0) + rng.normal(loc=np.zeros_like(f), scale=sigma)
     
     order = np.array(a).shape[0]
     # Now do the bayesian inference of the polynomial parameters.
-    
     with pm.Model() as _model:
+        fake_data = pm.ConstantData("y", flux_data , dims="obs_id")
         _a  = [ pm.Normal(f"a[{i}]", mu=a[i], sigma=2.5) for i in  range(order) ]
         _brightness = flux(f, _a, nu0)
         _likelihood = pm.Normal("likelihood", mu=_brightness, sigma=np.ones_like(f)*sigma,  observed=fake_data)
@@ -118,4 +119,4 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     
     #names, stats, a_cov, a_corr, idata = data_inference(name, f, fake_data, sigma=np.ones_like(f)*sigma, order=order, nu0=nu0)
 
-    return names, stats, a_cov, a_corr, f, fake_data
+    return names, stats, a_cov, a_corr, f, flux_data

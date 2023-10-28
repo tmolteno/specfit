@@ -3,10 +3,10 @@ import re
 
 import numpy as np
 import arviz as az
-import pymc3 as pm
+import pymc as pm
 
-import theano.tensor as T
-from theano import function
+
+import pytensor.tensor as T
 
 import matplotlib.pyplot as plt
 
