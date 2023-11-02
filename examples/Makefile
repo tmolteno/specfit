@@ -1,4 +1,4 @@
-VENV=../.venv/bin 
+VENV=../.venv/bin
 
 all:
 	mkdir -p output
