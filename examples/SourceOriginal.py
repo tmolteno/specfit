@@ -277,7 +277,7 @@ a_cov
 # In[15]:
 
 
-posterior_helper.matrix_2_latex(outfile="j1939.tex", matrix=a_cov, names=names)
+posterior_helper.matrix_2_latex(outfile="j1939.tex", a=a_cov, names=names)
 
 
 # In[16]:
@@ -285,7 +285,7 @@ posterior_helper.matrix_2_latex(outfile="j1939.tex", matrix=a_cov, names=names)
 
 # Now look at the correlation matrix
 
-posterior_helper.matrix_2_latex(outfile="j1939.tex", matrix=a_corr, names=names)
+posterior_helper.matrix_2_latex(outfile="j1939.tex", a=a_corr, names=names)
 
 
 # In[17]:
