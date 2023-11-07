@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import json
 import os
 import arviz as az
+from specfit import inference
 from specfit import posterior_helper
 import specfit
 
@@ -184,7 +185,7 @@ plt.savefig('j1939_measurements.pdf')
 # In[9]:
 
 
-nu0 = 1.4e9 # nu[3];
+nu0 = 1.0e9 # nu[3];
     
 order=5
 with pm.Model() as model:
@@ -200,11 +201,11 @@ with pm.Model() as model:
 # In[10]:
 
 
-with pm.Model() as model:
-    prior_checks = pm.sample_prior_predictive(samples=50)
+with model:
+    prior_checks = pm.sample_prior_predictive(samples=50, return_inferencedata=False)
 
 print("test")
-print(prior_checks)
+print(prior_checks.keys())
 _, ax = plt.subplots()
 
 ax.set_xscale("log", nonpositive='clip')
@@ -234,7 +235,7 @@ plt.savefig("original_prior_predictive.pdf")
 # In[11]:
 
 
-idata_j1939 = posterior_helper.run_or_load(model, fname = "idata_j1939.nc",
+idata_j1939 = inference.run_or_load(model, fname = "idata_j1939.nc",
                          n_samples = 5000, n_tune=3000, n_chains=4)
 
 
@@ -276,7 +277,7 @@ a_cov
 # In[15]:
 
 
-posterior_helper.matrix_2_latex(a_cov, names)
+posterior_helper.matrix_2_latex(outfile="j1939.tex", matrix=a_cov, names=names)
 
 
 # In[16]:
@@ -284,13 +285,13 @@ posterior_helper.matrix_2_latex(a_cov, names)
 
 # Now look at the correlation matrix
 
-posterior_helper.matrix_2_latex(a_corr, names)
+posterior_helper.matrix_2_latex(outfile="j1939.tex", matrix=a_corr, names=names)
 
 
 # In[17]:
 
 
-posterior_helper.full_column('J1939', idata_j1939, nu)
+posterior_helper.full_column(outfile="j1939.tex", all_names='J1939', idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
 
 
 # ### Posterior Predictive Sampling
