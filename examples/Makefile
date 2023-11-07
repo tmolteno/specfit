@@ -1,10 +1,10 @@
 VENV=../.venv/bin
 
-all:
+perley_butler:
 	mkdir -p output
 	$(VENV)/python3 perley_butler_process.py
 
-original:
+j1939:
 	mkdir -p output
 	$(VENV)/python3 SourceOriginal.py
 
