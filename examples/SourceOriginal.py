@@ -276,8 +276,9 @@ a_cov
 
 # In[15]:
 
+ofile = open("j1939.tex", 'w')
 
-posterior_helper.matrix_2_latex(outfile="j1939.tex", a=a_cov, names=names)
+posterior_helper.matrix_2_latex(outfile=ofile, a=a_cov, names=names)
 
 
 # In[16]:
@@ -285,13 +286,13 @@ posterior_helper.matrix_2_latex(outfile="j1939.tex", a=a_cov, names=names)
 
 # Now look at the correlation matrix
 
-posterior_helper.matrix_2_latex(outfile="j1939.tex", a=a_corr, names=names)
+posterior_helper.matrix_2_latex(outfile=ofile, a=a_corr, names=names)
 
 
 # In[17]:
 
 
-posterior_helper.full_column(outfile="j1939.tex", all_names='J1939', idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
+posterior_helper.full_column(outfile=ofile, all_names='J1939', idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
 
 
 # ### Posterior Predictive Sampling
@@ -304,7 +305,7 @@ posterior_helper.full_column(outfile="j1939.tex", all_names='J1939', idata=idata
 RANDOM_SEED=123
 with model:
     ppc = pm.sample_posterior_predictive(
-        idata_j1939, random_seed=RANDOM_SEED
+        idata_j1939, random_seed=RANDOM_SEED, return_inferencedata=False
     )
 
 
@@ -588,8 +589,7 @@ S_3C123, sigma_3C123, f_3C123 = cleanup(S_3C123, sigma_3C123, frequency)
 # In[30]:
 
 
-import pymc3 as pm
-
+'''
 def dataplot(name, freq, mu, sigma):
     fig, ax = plt.subplots()
 
@@ -783,5 +783,5 @@ plt.savefig('posterior_spectrum_3c286.pdf')
 # In[ ]:
 
 
-
+'''
 
