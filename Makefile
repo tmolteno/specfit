@@ -6,6 +6,9 @@
 develop: venv
 	${VENV}/pip3 install -e .
 
+requirements: venv
+	${VENV}/pip3 freeze > requirements.txt
+
 example:
 	${VENV}/python3 examples/raw_j1939_6342.py
 

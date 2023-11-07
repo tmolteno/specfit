@@ -292,7 +292,7 @@ posterior_helper.matrix_2_latex(outfile=ofile, a=a_corr, names=names)
 # In[17]:
 
 
-posterior_helper.full_column(outfile=ofile, all_names='J1939', idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
+posterior_helper.full_column(outfile=ofile, all_names=names, idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
 
 
 # ### Posterior Predictive Sampling
