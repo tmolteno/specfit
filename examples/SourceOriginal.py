@@ -332,6 +332,7 @@ ax.set_xlabel("Frequency (GHz)")
 ax.set_ylabel("Flux (Jy)")
 ax.set_title("Posterior predictive checks")
 ax.legend(ncol=2, fontsize=10);
+plt.savefig('posterior_predictive_j1939.pdf')
 
 
 # ## Validation against usual fit
@@ -369,7 +370,7 @@ ax.set_xscale("log", nonpositive='clip')
 ax.set_yscale("log", nonpositive='clip')
 ax.plot(nu_new, b_pb, c="k", alpha=0.4, label="Reynolds (1994)")
 ax.plot(nu_new, b_new, '-.', c="g", alpha=1, label="This work")
-ax.plot(nu_new, np.abs(b_new-b_pb), c="r", alpha=1, label='defference $\Delta S$')
+ax.plot(nu_new, np.abs(b_new-b_pb), c="r", alpha=1, label='difference $\Delta S$')
 ax.plot(nu, measured_data, 'o', c="b", alpha=1, label="Measurements")
 
 ax.legend()
@@ -539,7 +540,7 @@ csv_data = '''0.3275, 145.0, 4.3, 46.8, 1.4, 26.1, 0.8, 60.8, 1.8, 14
 48.565, , , 0.272, 0.015, 1.465, 0.1, 0.325, 0.025, 1
 '''
 
-
+'''
 # In[29]:
 
 
@@ -589,7 +590,7 @@ S_3C123, sigma_3C123, f_3C123 = cleanup(S_3C123, sigma_3C123, frequency)
 # In[30]:
 
 
-'''
+
 def dataplot(name, freq, mu, sigma):
     fig, ax = plt.subplots()
 
@@ -725,19 +726,23 @@ posterior_helper.idata_2_latex(idata_3c286)
 
 a_cov, a_corr, names = posterior_helper.chain_covariance(idata_3c286)
 np.set_printoptions(precision=4, suppress=False)
-a_cov, a_corr
+print("Covariance")
+print(a_cov)
+print("Correlation")
+print(a_corr)
 
 
 # In[41]:
 
+ofile = open("3C286.tex", 'w')
 
-posterior_helper.full_column("3C286", idata_3c286, frequency)
+posterior_helper.full_column(ofile, "3C286", idata_3c286, frequency)
 
 
 # In[42]:
 
 
-posterior_helper.full_column("3C295", idata_3c295, frequency)
+posterior_helper.full_column(ofile, "3C295", idata_3c295, frequency)
 
 
 # In[43]:
@@ -780,8 +785,4 @@ plt.savefig('posterior_spectrum_3c286.pdf')
 
 # ## 
 
-# In[ ]:
-
-
 '''
-
