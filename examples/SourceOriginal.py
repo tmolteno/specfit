@@ -65,10 +65,10 @@ def log_flux(w, logw, a):
 
 def flux(nu, a, nu0):
     w = nu/nu0
-    logw = np.log10(w)
+    logw = np.log(w)
     
     logS = log_flux(w, logw, a)
-    return np.power(10, logS)
+    return np.exp(logS)
 
 
 # In[4]:
@@ -186,8 +186,9 @@ plt.savefig('j1939_measurements.pdf')
 
 
 nu0 = 1.0e9 # nu[3];
-    
-order=5
+
+
+order=4
 with pm.Model() as model:
     
     # Choose priors
@@ -195,7 +196,8 @@ with pm.Model() as model:
     print(a_1)
     brightness_1 = flux(nu, a_1, nu0)
 
-    likelihood_1 = pm.Normal("likelihood", mu=brightness_1, sigma=sigma, observed=measured_data)
+    # likelihood_1 = pm.Normal("likelihood", mu=brightness_1, sigma=sigma, observed=measured_data)
+    likelihood_1 = pm.StudentT("likelihood", nu=5, mu=brightness_1, sigma=sigma, observed=measured_data)
 
 
 # In[10]:
@@ -211,13 +213,12 @@ _, ax = plt.subplots()
 ax.set_xscale("log", nonpositive='clip')
 ax.set_yscale("log", nonpositive='clip')
 
-for a0, a1, a2, a3, a4 in zip( prior_checks["a[0]"],
+for a0, a1, a2, a3 in zip( prior_checks["a[0]"],
                    prior_checks["a[1]"],
                    prior_checks["a[2]"],
-                   prior_checks["a[3]"],
-                   prior_checks["a[4]"]
+                   prior_checks["a[3]"]
                              ):
-    b = flux(nu, [a0, a1, a2, a3, a4], nu0)
+    b = flux(nu, [a0, a1, a2, a3], nu0)
     ax.plot(nu/1e9, b, c="k", alpha=0.4)
 ax.plot(nu/1e9, measured_data, c="b", alpha=1, label="J1939-6342")
 
@@ -278,21 +279,7 @@ a_cov
 
 ofile = open("j1939.tex", 'w')
 
-posterior_helper.matrix_2_latex(outfile=ofile, a=a_cov, names=names)
-
-
-# In[16]:
-
-
-# Now look at the correlation matrix
-
-posterior_helper.matrix_2_latex(outfile=ofile, a=a_corr, names=names)
-
-
-# In[17]:
-
-
-posterior_helper.full_column(outfile=ofile, all_names=names, idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
+posterior_helper.full_column(outfile=ofile, all_names=["J1939-6342"], idata=idata_j1939, freq=nu)  # outfile, all_names, idata, freq
 
 
 # ### Posterior Predictive Sampling
@@ -428,7 +415,7 @@ plt.savefig('posterior_spectrum_j1939.pdf')
 
 
 ## Now sample from a multivariate gaussian of the polynomial model
-order=5
+order=4
 mean = [ idata_j1939.posterior.mean().get(f"a[{i}]").values.tolist() for i in range(order)]
 a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939)
 print(mean)
