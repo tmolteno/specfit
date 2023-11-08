@@ -37,11 +37,11 @@ def flux(nu, a, nu0):
         The flux (in Jansky) at each of the supplied frequencies
     """
     w = nu/nu0
-    logw = np.log10(w)
+    logw = np.log(w)
 
     logS = np.maximum(log_flux(w, logw, a), -500.0)
     
-    return np.power(10, logS)
+    return np.exp(logS)
 
 def Tflux(nu, a, nu0):
     """Calculate flux from a polynomial model
@@ -63,11 +63,11 @@ def Tflux(nu, a, nu0):
         The flux (in Jansky) at each of the supplied frequencies
     """
     w = nu/nu0
-    logw = np.log10(w)
+    logw = np.log(w)
 
     logS = T.maximum(log_flux(w, logw, a), -500.0)
     
-    return np.power(10, logS)
+    return np.exp(logS)
 
 
 def row_2_table(outfile, row):
@@ -127,23 +127,28 @@ def vector_2_latex(outfile, a, names):
     print("\\end{tabular}", file=outfile)
 
 
+def get_names(idata):
+    names = [k for k in idata.posterior.data_vars.keys()]
+    return names
+
 def get_stats(idata):
-    names = [x for x in idata.posterior.mean()]
+    names = get_names(idata)
+
     ret = [ np.array([idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()]) for x in names ]
     return np.array(ret).T, names
 
 def idata_2_latex(idata):
-    names = [x for x in idata.posterior.mean()]
+    names = get_names(idata)
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
     matrix_2_latex(data, names)
 
 def mean_2_latex(outfile, idata):
-    names = [x for x in idata.posterior.mean()]
+    names = get_names(idata)
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
     vector_2_latex(outfile, data, names)
 
 def get_random_sample(idata, chain=0):
-    names = [x for x in idata.posterior.mean()]
+    names = get_names(idata)
     n_samples = idata.posterior.get(names[0]).values.shape[1]
     sample = np.random.randint(0,n_samples)
 
@@ -168,7 +173,7 @@ def full_column(outfile, all_names, idata, freq):
     print("  \\\\  \\hline", file=outfile)
 
 def chain_covariance(idata):
-    names = [x for x in idata.posterior.mean()]
+    names = get_names(idata)
     chain = 0
     a = [idata.posterior.get(n)[chain, :] for n in names]
     a = np.array(a)

@@ -71,6 +71,8 @@ Now we can plot the data and show the results.
 
 ## Changelog
 
+- 0.3.0b3 Clean up to use the natural log throughout! (*IMPORTANT*)
+          Use consistent way to get names of variables from the posterior
 - 0.3.0b2 Use pymc and upgrade to newer versions.
 - 0.2.0b4 Include a separate function (marginal_likelihood) for estimating the marginal likelihood using SMC
           Change the likelihood to use a Student's t distribution for robustness.

@@ -11,19 +11,33 @@ def run_or_load(mcmc_model, fname, n_samples = 5000, n_tune=5000, n_chains=4, ca
         ret = az.from_netcdf(fname)
     else:
         with mcmc_model:
-            #approximation = pm.fit(n=n_samples, method='fullrank_advi') # Reutrns 
-            #ret = approximation.sample(n_samples)
-            # start = pm.find_MAP()
-            # ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, start=start, return_inferencedata=True, discard_tuned_samples=True)
-            ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, return_inferencedata=True, discard_tuned_samples=True)
+            if False:
+                advi = pm.ADVI()
+                tracker = pm.callbacks.Tracker(
+                    mean=advi.approx.mean.eval,  # callable that returns mean
+                    std=advi.approx.std.eval,  # callable that returns std
+                )       
+                approx = advi.fit(n_samples, callbacks=[tracker])
+                ret = pm.sample(n_samples, init='advi+adapt_diag', tune=n_tune, chains=n_chains, start=approx, return_inferencedata=True, discard_tuned_samples=True)
+            else:
+                ret = pm.sample(n_samples, tune=n_tune, chains=n_chains, return_inferencedata=True, discard_tuned_samples=True)
         if cache:
             ret.to_netcdf(fname);
     return ret
 
 
 def get_model(name, freq, mu, sigma, order, nu0):
+    
+    mumax = np.max(mu)
+    print(f"Mu max: {mumax}")
+    print(f"Mu max log: {np.log(mumax)}")
+    
+    orders = range(order)
+    means = [0.0 for i in range(order)]
+    means[0] = np.log(mumax)
+    
     with pm.Model() as _model:
-        _a  = [ pm.Normal(f"a[{i}]", mu=0, sigma=2.5, initval=0.1) for i in  range(order) ]
+        _a  = [ pm.Normal(f"a[{i}]", mu=means[i], sigma=2.5, initval=0.1) for i in  range(order) ]
         
         _x = pm.MutableData('frequencies', freq) # a data container, can be changed
         _brightness = flux(_x, _a, nu0)
@@ -72,7 +86,7 @@ def data_inference(name, freq, mu, sigma, order, nu0):
         a list of strings representing the header columns
     """
     _model = get_model(name, freq, mu, sigma, order, nu0=nu0)
-    _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=5000, n_tune=order*3000)
+    _idata = run_or_load(_model, fname = f"idata_{name}.nc", n_samples=10000, n_tune=order*3000)
 
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)

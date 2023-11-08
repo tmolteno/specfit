@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import specfit as sf
 import pymc as pm
+import arviz as az
 
 def cleanup(_S, _sigma, _freq):
     S = np.array(_S)
@@ -37,11 +38,14 @@ def process_bic(outfile, key, _S, _sigma, _frequency, order):
 def process(outfile, key, _S, _sigma, _frequency, order):
     global full_names
     official_name = full_names[key][0]
+    print(f"%%%%% Processing {key} order={order}", flush=True)
     print(f"%%%%% Processing {key} order={order}", file=outfile, flush=True)
     nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
-    
-    bic = sf.data_inference(key, freq, S, sigma, nu0=nu0, order=order)
+    print(f" S = {S}")
+    print(f" sigma = {sigma}")
+    print(f" freq = {freq}")
+    # bic = sf.data_inference(key, freq, S, sigma, nu0=nu0, order=order)
 
     names, stats, a_cov, a_corr, idata, mcmc_model = sf.data_inference(key, freq, S, sigma, order=order, nu0=nu0)
     sf.full_column(outfile, full_names[key], idata, np.array(freq))
@@ -83,6 +87,17 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     fig, ax = sf.posterior_plot(plt, official_name, freq, idata, nu0)
     fig.savefig(f"./output/{key}_pdf.pdf")
     plt.close(fig)
+
+    az.plot_pair(
+            idata,
+            var_names=['a['],
+            kind="hexbin",
+            filter_vars="like",
+            marginals=True,
+            figsize=(12, 12),
+        );
+    plt.tight_layout()
+    plt.savefig(f"./output/{key}_posterior_pairs.pdf")
 
 
 
@@ -197,8 +212,16 @@ if False:
     \\end{table}
     """, file=outfile)
 
-with open('perley_butler_2017.tex', 'w') as outfile:
-    for calibrator in stars:
+N = len(stars)
+split = N//2
+
+with open('perley_butler_2017_1.tex', 'w') as outfile:
+    for calibrator in stars[0:split]:
+        mu = data[calibrator]
+        sigma = mu*(err / 100)
+        process(outfile, calibrator, mu, sigma, frequency, orders[calibrator])
+with open('perley_butler_2017_2.tex', 'w') as outfile:
+    for calibrator in stars[split:]:
         mu = data[calibrator]
         sigma = mu*(err / 100)
         process(outfile, calibrator, mu, sigma, frequency, orders[calibrator])

@@ -51,7 +51,7 @@ if True:
 
 ## Now do polynomial inference from the data again.
 
-names2, stats2, a_cov2, a_corr2, f, fake_data = sf.datafree_inference('J1939-6342-poly', freq_min=freq[0], freq_max=freq[-1], nfreq=20, sigma=0.5, a=[ 1.17029511,  0.24627929, -1.642271,    0.59897049], nu0=nu0)
+names2, stats2, a_cov2, a_corr2, f, fake_data = sf.datafree_inference('J1939-6342-poly', freq_min=freq[0], freq_max=freq[-1], nfreq=20, sigma=0.5, a=[ 2.69445071,  0.24791307, -0.71448904,  0.11324043], nu0=nu0)
 
 print(fake_data)
 
