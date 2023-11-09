@@ -6,6 +6,8 @@ Processing all the perley butler catalogue, as well as j1939_6342 can be done as
     pip3 install -e .
 
 
-Then
+To generate the catalogue of sources
 
-    python3 perley_butler_process.py
+    make catalogue
+    
+This will generate an HDF5 file that contains a machine readable version of this catalogue in the file calibrator_catalogue.hdf5.

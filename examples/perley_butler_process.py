@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import specfit as sf
 import pymc as pm
 import arviz as az
+import h5py
+
 
 def cleanup(_S, _sigma, _freq):
     S = np.array(_S)
@@ -36,7 +38,7 @@ def process_bic(outfile, key, _S, _sigma, _frequency, order):
 
 
 def process(outfile, key, _S, _sigma, _frequency, order):
-    global full_names
+    global full_names, hdf
     official_name = full_names[key][0]
     print(f"%%%%% Processing {key} order={order}", flush=True)
     print(f"%%%%% Processing {key} order={order}", file=outfile, flush=True)
@@ -48,6 +50,15 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     # bic = sf.data_inference(key, freq, S, sigma, nu0=nu0, order=order)
 
     names, stats, a_cov, a_corr, idata, mcmc_model = sf.data_inference(key, freq, S, sigma, order=order, nu0=nu0)
+    
+    with h5py.File('calibrator_catalogue.hdf5', 'a') as f:
+        grp = f.create_group(key)
+        ds_mean = grp.create_dataset("mean", data=stats[0])
+        ds_sdev = grp.create_dataset("sdev", data=stats[1])
+        ds_cov = grp.create_dataset("cov", data=a_cov)
+        ds_cor = grp.create_dataset("corr", data=a_corr)
+    
+
     sf.full_column(outfile, full_names[key], idata, np.array(freq))
     #print(pm.summary(idata))
     fig, ax = sf.dataplot(plt, official_name, freq, S, sigma)

@@ -120,6 +120,7 @@ def vector_2_latex(outfile, a, names):
         columns = columns+'r'
 
     print(f"\\begin{{tabular}}{{rrr}}", file=outfile)
+    print("     \\hline", file=outfile)
     print(f"    $x$   & $\mu_x$ & $\sigma_x$   \\\\", file=outfile)
     print(f"    \\hline", file=outfile)
     for n, x in zip(clean_names, a):
@@ -171,7 +172,7 @@ def full_column(outfile, all_names, idata, freq):
     print(f" & ", file=outfile)
     matrix_2_latex(outfile, a_corr, names)
     print("  \\\\  \\hline", file=outfile)
-
+        
 def chain_covariance(idata):
     names = get_names(idata)
     chain = 0

@@ -29,7 +29,7 @@ upload:
 include Makefile.venv
 
 $(VENV):
-# 	$(PY) -m venv --system-site-packages $(VENVDIR)
-	$(PY) -m venv $(VENVDIR)
+	$(PY) -m venv --system-site-packages $(VENVDIR)
+#	$(PY) -m venv $(VENVDIR)
 	$(VENV)/python3 -m pip install --upgrade pip setuptools wheel
 

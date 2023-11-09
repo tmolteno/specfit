@@ -37,6 +37,7 @@ import os
 import arviz as az
 from specfit import inference
 from specfit import posterior_helper
+import h5py
 import specfit
 
 
@@ -273,7 +274,14 @@ plt.savefig('posterior_pairs_J1939.pdf')
 a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939)
 np.set_printoptions(precision=4, suppress=False)
 a_cov
+stats, names = posterior_helper.get_stats(idata_j1939)
 
+with h5py.File('calibrator_catalogue.hdf5', 'a') as f:
+    grp = f.create_group("J1939-6342")
+    ds_mean = grp.create_dataset("mean", data=stats[0])
+    ds_sdev = grp.create_dataset("sdev", data=stats[1])
+    ds_cov = grp.create_dataset("cov", data=a_cov)
+    ds_cor = grp.create_dataset("corr", data=a_corr)
 
 # In[15]:
 
