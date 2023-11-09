@@ -3,6 +3,11 @@
 Infer polynomial coefficients and their covariance structure for fitting radio-astronometric callibrator spectra.
 
 Author: Tim Molteno. tim@elec.ac.nz
+Publication: T.C.A. Molteno "Correlation Structure in Flux-Density Calibrator Models". MNRAS - to appear.
+
+## Data
+
+Machine readable data from this catalogue is available in the HDF file in the data directory. [calibrator_catalogue.hdf5](data/calibrator_catalogue.hdf5)
 
 ## Install
 
