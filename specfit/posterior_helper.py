@@ -7,21 +7,22 @@ import pymc as pm
 
 
 import pytensor.tensor as T
-
 import matplotlib.pyplot as plt
+
 
 def log_flux(w, logw, a):
     logS = a[0]
-    for i in range(1,len(a)):
+    for i in range(1, len(a)):
         logS += a[i]*logw**i
 
     return logS
+
 
 def flux(nu, a, nu0):
     """Calculate flux from a polynomial model
 
     Flux is modeled as a polynomial in log(nu/nu0).
-    
+
     Parameters
     ----------
     nu : array or float
@@ -30,7 +31,7 @@ def flux(nu, a, nu0):
         The coefficients of the polynomial model
     nu0 : float
         The normalizing frequency
-        
+
     Returns
     -------
     array-like or float
@@ -40,14 +41,14 @@ def flux(nu, a, nu0):
     logw = np.log(w)
 
     logS = np.maximum(log_flux(w, logw, a), -500.0)
-    
+
     return np.exp(logS)
 
 def Tflux(nu, a, nu0):
     """Calculate flux from a polynomial model
 
     Flux is modeled as a polynomial in log(nu/nu0).
-    
+
     Parameters
     ----------
     nu : array or float
@@ -56,7 +57,7 @@ def Tflux(nu, a, nu0):
         The coefficients of the polynomial model
     nu0 : float
         The normalizing frequency
-        
+
     Returns
     -------
     array-like or float
@@ -66,7 +67,7 @@ def Tflux(nu, a, nu0):
     logw = np.log(w)
 
     logS = T.maximum(log_flux(w, logw, a), -500.0)
-    
+
     return np.exp(logS)
 
 
@@ -83,6 +84,7 @@ def row_2_table(outfile, row):
             print("& ", end='', file=outfile)
     print("\\\\", file=outfile)
 
+
 def clean_up_names(names):
     ret = []
     for n in names:
@@ -90,6 +92,7 @@ def clean_up_names(names):
         newname = re.sub(r"a\[([0-9])\]", "a_{\\1}", n)
         ret.append(f"${newname}$")
     return ret
+
 
 def matrix_2_latex(outfile, a, names):
     clean_names = clean_up_names(names)
@@ -104,9 +107,10 @@ def matrix_2_latex(outfile, a, names):
     row_2_table(outfile, clean_names)
     print("    \\hline", file=outfile)
     for i in range(a.shape[1]):
-        row_2_table(outfile, a[:,i])
+        row_2_table(outfile, a[:, i])
     print("    \\hline", file=outfile)
     print("\\end{tabular}", file=outfile)
+
 
 def vector_2_latex(outfile, a, names):
     '''
@@ -132,21 +136,26 @@ def get_names(idata):
     names = [k for k in idata.posterior.data_vars.keys()]
     return names
 
+
 def get_stats(idata):
     names = get_names(idata)
 
-    ret = [ np.array([idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()]) for x in names ]
+    ret = [np.array([idata.posterior.get(x).mean().values.tolist(),
+                    idata.posterior.get(x).std().values.tolist()]) for x in names]
     return np.array(ret).T, names
+
 
 def idata_2_latex(idata):
     names = get_names(idata)
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
     matrix_2_latex(data, names)
 
+
 def mean_2_latex(outfile, idata):
     names = get_names(idata)
     data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
     vector_2_latex(outfile, data, names)
+
 
 def get_random_sample(idata, chain=0):
     names = get_names(idata)
@@ -159,12 +168,12 @@ def get_random_sample(idata, chain=0):
 
 def full_column(outfile, all_names, idata, freq):
     a_cov, a_corr, names = chain_covariance(idata)
-    
+
     name_list = "\\begin{tabular}{l} " + all_names[0]
     for n in all_names[1:]:
         name_list = name_list + f" \\\\ {n} "
     name_list = name_list + " \\end{tabular}"
-    
+
     print(f"{name_list} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} & ", file=outfile)
     mean_2_latex(outfile, idata)
     print(f" & ", file=outfile)
@@ -172,7 +181,8 @@ def full_column(outfile, all_names, idata, freq):
     print(f" & ", file=outfile)
     matrix_2_latex(outfile, a_corr, names)
     print("  \\\\  \\hline", file=outfile)
-        
+
+
 def chain_covariance(idata):
     names = get_names(idata)
     chain = 0
@@ -181,11 +191,9 @@ def chain_covariance(idata):
     return np.cov(a), np.corrcoef(a), names
 
 
-
-
 def get_gain(idata, i, chain, sample, use_phase=False):
     if i == 0:
-        return 0.75;  # The set value of the ant0 gain and phase
+        return 0.75  # The set value of the ant0 gain and phase
 
     if use_phase:
         g_i = idata.posterior[f"gain_{i}"][chain, sample]
@@ -223,7 +231,6 @@ def dataplot(plt, name, freq, mu, sigma):
     ax.grid(True)
     ax.set_title(f"Flux Measurements: {name}");
     return fig, ax
-    
 
 
 def posterior_plot(plt, name, freq, idata, nu0):
@@ -232,9 +239,8 @@ def posterior_plot(plt, name, freq, idata, nu0):
     min_freq = freq[0]
     max_freq = freq[-1]
 
-    
     dataset = []
-    
+
     num_freqs = 30
     freq = np.geomspace(min_freq, max_freq, num_freqs)
     bar_widths = np.geomspace(min_freq, max_freq, num_freqs+1)[0:-1] - np.geomspace(min_freq, max_freq, num_freqs+1)[1:]
@@ -242,9 +248,9 @@ def posterior_plot(plt, name, freq, idata, nu0):
         samples = np.array([flux(n, get_random_sample(idata), nu0) for i in range(200)])
         dataset.append(samples)
     #dataset = np.array(dataset)
-    
+
     #ax.plot(freq, dataset, '.', c="k", alpha=0.05)
-        
+
     vp = ax.violinplot(dataset=dataset, positions=freq, widths = bar_widths,
                       showmeans=False, showmedians=False, showextrema=False)
                       #vert=True)
@@ -260,6 +266,7 @@ def posterior_plot(plt, name, freq, idata, nu0):
     ax.set_title(f"Posterior Spectrum PDF ({name})")
     ax.grid(True);
     return fig, ax
+
 
 if __name__=="__main__":
     a = np.array([[ 1.982e-04, -7.580e-06, -2.200e-05,  1.612e-05, -1.894e-06],
