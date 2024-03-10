@@ -7,11 +7,14 @@ import pymc as pm
 import numpy as np
 import arviz as az
 
+import logging
 import os
 
 from .posterior_helper import get_stats, chain_covariance
 from .posterior_helper import Tflux as flux
 from .posterior_helper import flux as num_flux
+
+logger = logging.getLogger()
 
 
 def run_or_load(mcmc_model, fname,
@@ -63,17 +66,58 @@ def get_model(name, freq, mu, sigma, order, nu0):
     return _model
 
 
-def marginal_likelihood(name, freq, mu, sigma, nu0):
+def marginal_likelihood(name, freq,
+                        mu, sigma, nu0,
+                        o_start=2, o_stop=6):
+    """
+    Estimate the marginal likelihood using Sequential Monte Carlo (SMC)
+    sampling.
+
+    The Marginal Likelihood represents the probability of the model itself,
+    and can be used to choose the best order for a polynomial model.
+
+    https://www.ma.imperial.ac.uk/~nkantas/sysid09_final_normal_format.pdf
+
+    Parameters
+    ----------
+    name : str
+        A unique key to identify this model. This is used to cache results
+        of the inference.
+    freq : array-like
+        The frequencies at which  the measurements are made (Hz)
+    mu : array-like
+        The intensities (in Jansky) for each measurement
+    sigma : array-like
+        The estimate of the standard deviation of each measurement
+    nu0 : float
+        The normalizing frequency for the polynomial (typically 1 GHz)
+    o_start : int
+        The lowest order of polynomial fit.
+    o_stop : int
+        The hightes order of polynomial fit.
+
+    Returns
+    -------
+    list
+        a list of [order ml] where ml is the log marginal likelihood
+        (or Beyesian Evidence)
+    """
 
     ret = []
-    for _ord in range(2,7):
-        _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
-        with _model:
-            _chain = pm.sample_smc(5000, chains=4)
-            _bic = np.mean(_chain.report.log_marginal_likelihood)
-        print(f"Log Marginal Likelihood: {_ord}:  {_bic}")
-
-        ret.append([_ord, _bic])
+    for _ord in range(o_start, o_stop+1):
+        try:
+            _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
+            with _model:
+                _idata = pm.sample_smc(3000*_ord, kernel=pm.smc.kernels.MH,
+                                       chains=4, threshold=0.6,
+                                       correlation_threshold=0.01)
+                logger.info(f"_idata {_idata.sample_stats.keys()}")
+                _evidence = _idata.sample_stats["log_marginal_likelihood"].mean().item()
+            print(f"Log Marginal Likelihood: {_ord}:  {_evidence}")
+            ret.append([_ord, _evidence])
+        except Exception as e:
+            logger.error(f"Exception {e}")
+            ret.append([_ord, float("nan")])
 
     return np.array(ret)
 

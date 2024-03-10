@@ -5,7 +5,23 @@ import specfit as sf
 import pymc as pm
 import arviz as az
 import h5py
+import logging
 
+logger = logging.getLogger('specfit')
+logger.setLevel(logging.INFO)
+
+# create console handler and set level to debug
+ch = logging.StreamHandler()
+ch.setLevel(logging.INFO)
+
+# create formatter
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
+# add formatter to ch
+ch.setFormatter(formatter)
+
+# add ch to logger
+logger.addHandler(ch)
 
 def cleanup(_S, _sigma, _freq):
     S = np.array(_S)
@@ -16,17 +32,18 @@ def cleanup(_S, _sigma, _freq):
 
 NU_0 = 1.0e9
 
+
 def process_bic(outfile, key, _S, _sigma, _frequency, order):
     global full_names
     official_name = full_names[key][0]
     print(f"%%%%% Processing {key}", file=outfile, flush=True)
     nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
-    
+
     bic = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
 
     bmax = np.max(bic[:,1])
-    
+
     print(f"{official_name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} &  {order}", file=outfile)
     for b in bic:
         _o, _b = b
@@ -202,7 +219,7 @@ full_names = {
     '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
 }
 
-if False:
+if True:
     with open('perley_butler_bic.tex', 'w') as outfile:
         print("""
     \\begin{table}
