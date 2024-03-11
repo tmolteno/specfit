@@ -9,6 +9,7 @@ import arviz as az
 
 import logging
 import os
+import traceback
 
 from .posterior_helper import get_stats, chain_covariance
 from .posterior_helper import Tflux as flux
@@ -50,12 +51,14 @@ def get_model(name, freq, mu, sigma, order, nu0):
     print(f"Mu max: {mumax}")
     print(f"Mu max log: {np.log(mumax)}")
 
-    means = [0.0 for i in range(order)]
+    means = [0.0 for i in range(0, order)]
+    sigmas = [0.5 for i in range(0, order)]
     means[0] = np.log(mumax)
+    sigmas[0] = 1.5
+    sigmas[1] = 1
 
     with pm.Model() as _model:
-        _a = [pm.Normal(f"a[{i}]", mu=means[i], sigma=2.5,
-                        initval=0.1) for i in range(order)]
+        _a = [pm.Normal(f"a[{i}]", mu=means[i], sigma=sigmas[i]) for i in range(order)]
 
         _x = pm.MutableData('frequencies', freq)  # a data container, mutable
         _brightness = flux(_x, _a, nu0)
@@ -108,21 +111,40 @@ def marginal_likelihood(name, freq,
         try:
             _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
             with _model:
-                _idata = pm.sample_smc(3000*_ord, kernel=pm.smc.kernels.MH,
+                _idata = pm.sample_smc(draws=8000, kernel=pm.smc.kernels.IMH,
                                        chains=4, threshold=0.6,
                                        correlation_threshold=0.01)
-                logger.info(f"_idata {_idata.sample_stats.keys()}")
+                print(f"_idata {_idata.sample_stats.keys()}")
                 _evidence = _idata.sample_stats["log_marginal_likelihood"].mean().item()
             print(f"Log Marginal Likelihood: {_ord}:  {_evidence}")
             ret.append([_ord, _evidence])
         except Exception as e:
-            logger.error(f"Exception {e}")
+            print(f"Exception {e}")
+            print(_idata.sample_stats)
+            print(traceback.format_exc())
             ret.append([_ord, float("nan")])
 
     return np.array(ret)
 
 
-def data_inference(name, freq, mu, sigma, order, nu0):
+def posterior_predictive_sampling(idata, num_pp_samples):
+    pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+
+    post = idata.posterior
+    var_names = list(post.data_vars)
+    # pp_sample_ix = np.random.choice(total_pp_samples, size=num_pp_samples, replace=False)
+
+    ret = {}
+    for v in var_names:
+        ret[v] = post[v]
+
+    return ret
+    
+    # az.plot_ppc(idata, num_pp_samples=100)
+
+
+def data_inference(name, freq, mu, sigma, order, nu0,
+                   n_samples=10000):
     """Infer a spectral polynomial from original measurements
 
     Use Bayesian inference to infer the coefficients of a polynomial model for
@@ -149,7 +171,7 @@ def data_inference(name, freq, mu, sigma, order, nu0):
     """
     _model = get_model(name, freq, mu, sigma, order, nu0=nu0)
     _idata = run_or_load(_model, fname=f"idata_{name}.nc",
-                         n_samples=10000, n_tune=order*3000)
+                         n_samples=n_samples, n_tune=n_samples)
 
     a_cov, a_corr, names = chain_covariance(_idata)
     stats, names = get_stats(_idata)

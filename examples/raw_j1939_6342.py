@@ -1,6 +1,8 @@
 import numpy as np
 import specfit as sf
 import matplotlib.pyplot as plt
+import sympy as sp
+
 
 # Data from J.E. Reynolds for J1939-6342
 original_data = np.array(
@@ -28,9 +30,9 @@ nu0=1.0e9
 
 if True:
     names, stats, a_cov, a_corr, idata, model = \
-        sf.data_inference("J1939-6342", 
-            freq=freq, mu=mu, sigma=sigma, 
-            order=4, nu0=nu0)
+        sf.data_inference("J1939-6342",
+            freq=freq, mu=mu, sigma=sigma,
+            order=4, nu0=nu0, n_samples=5000)
 
     a = stats[0] # Means
 
@@ -48,7 +50,44 @@ if True:
     print(f"Covariance Matrix:\n{np.array2string(a_cov, separator=',', precision=4)}")
     print(f"Correlation Matrix:\n{np.array2string(a_corr, separator=',', precision=4)}")
 
+    post = idata.posterior
+    print(post.keys())
 
+    pp = sf.posterior_predictive_sampling(idata, 1000)
+
+    x = sp.Symbol('x', real=True)
+    polys = None
+    for k in pp.keys():
+        n = int(k[2])
+        a = pp[k].to_numpy()[0,:]
+
+        print(a.shape)
+        n_samples = len(a)
+        if polys is None:
+            polys = [0]*n_samples
+
+        for i in range(n_samples):
+            polys[i] += a[i]*x**n
+
+    peaks = []
+    for p in polys:
+        eqn = sp.Eq(sp.diff(p, x), 0)
+        low, high = sp.solveset(eqn, x, domain=sp.S.Reals)
+
+        f = nu0*sp.exp(low)
+        print(f"{eqn} --> {low} --> {f}")
+        peaks.append(sp.N(f))
+        # logw = log(nu/nu0) = soln
+        # --> nu = nu0*exp(soln)
+
+    peaks = np.array(peaks, dtype=float)/1e9
+    print(peaks.shape)
+    plt.hist(peaks, bins='fd')
+    plt.title("PDF of spectral peaks J1939-6342")
+    plt.xlabel("Frequency (GHz)")
+    plt.grid(True)
+    plt.savefig("j1939_peaks.pdf")
+    plt.show()
 ## Now do polynomial inference from the data again.
 
 names2, stats2, a_cov2, a_corr2, f, fake_data = sf.datafree_inference('J1939-6342-poly', freq_min=freq[0], freq_max=freq[-1], nfreq=20, sigma=0.5, a=[ 2.69445071,  0.24791307, -0.71448904,  0.11324043], nu0=nu0)
@@ -77,3 +116,6 @@ print(f"Means: {stats2[0]}")
 print(f"SDev: {stats2[1]}")
 print(f"Covariance Matrix:\n{np.array2string(a_cov2, separator=',', precision=4)}")
 print(f"Correlation Matrix:\n{np.array2string(a_corr2, separator=',', precision=4)}")
+
+
+
