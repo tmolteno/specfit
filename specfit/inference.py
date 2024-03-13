@@ -107,19 +107,24 @@ def marginal_likelihood(name, freq,
     """
 
     ret = []
+    rng = np.random.default_rng(123)
+
     for _ord in range(o_start, o_stop+1):
         try:
             _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
             with _model:
-                _idata = pm.sample_smc(draws=20000, kernel=pm.smc.kernels.IMH,
-                                       chains=6, threshold=0.6,
-                                       correlation_threshold=0.01)
-                print(f"_idata {_idata.sample_stats.keys()}")
 
-                lml =  _idata.sample_stats["log_marginal_likelihood"]
-                print(f"Log Marginal Likelihood: {_ord}:  {lml}")
-                _evidence =lml.mean().item()
-            ret.append([_ord, _evidence])
+                trace = pm.sample_smc(draws=1500*_ord, kernel=pm.smc.kernels.IMH,
+                                        chains=6, threshold=0.6,
+                                        correlation_threshold=0.01,
+                                        random_seed=rng, return_inferencedata=False, progressbar=False)
+
+                lml = trace.report.log_marginal_likelihood
+                _evidence = np.mean([chain[-1] for chain in lml])
+
+                print(f"Log Marginal Likelihood: {_ord}:  {_evidence}")
+
+                ret.append([_ord, _evidence])
         except Exception as e:
             print(f"Exception {e}")
             print(_idata.sample_stats)

@@ -64,11 +64,11 @@ def Tflux(nu, a, nu0):
         The flux (in Jansky) at each of the supplied frequencies
     """
     w = nu/nu0
-    logw = np.log(w)
+    logw = T.log(w)
 
     logS = T.maximum(log_flux(w, logw, a), -500.0)
 
-    return np.exp(logS)
+    return T.exp(logS)
 
 
 def row_2_table(outfile, row):
