@@ -40,17 +40,19 @@ def process_bic(outfile, key, _S, _sigma, _frequency, order):
     nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
 
-    bic = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
+    bic_data = sf.marginal_likelihood(key, freq, S, sigma, nu0=nu0)
 
-    bmax = np.max(bic[:,1])
+    bmax = np.max(bic_data[:,1])
 
-    print(f"{official_name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} &  {order}", file=outfile)
-    for b in bic:
-        _o, _b = b
-        if _b == bmax:
-            print(f"&  \\bf{{{_b :5.2f}}} ", file=outfile, end='')
+    bics = np.exp(bic_data[:,1] - bmax)
+    orders = bic_data[:,0]
+
+    print(f"{official_name} & {freq[0]/1e9 :4.2f}-{freq[-1]/1e9 :4.2f} &  {order}", file=outfile, end='')
+    for _o, _b in zip(orders, bics):
+        if _b == 1:
+            print(f" &  \\bf{{{_b :5.4f}}} ", file=outfile, end='')
         else:
-            print(f"&  {_b :5.2f} ", file=outfile, end='')
+            print(f" &  {_b :5.4f} ", file=outfile, end='')
     print('\\\\', file=outfile)
 
 

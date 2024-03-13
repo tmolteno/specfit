@@ -102,8 +102,10 @@ def marginal_likelihood(name, freq,
     Returns
     -------
     list
-        a list of [order ml] where ml is the log marginal likelihood
-        (or Beyesian Evidence)
+        a list of [order ml] where ml is the marginal likelihood
+        (or Beyesian Evidence). This is scaled so that the maximum
+        marginal likelihood is 1.0 (since we only know this up to
+        a scaling)
     """
 
     ret = []
@@ -131,7 +133,11 @@ def marginal_likelihood(name, freq,
             print(traceback.format_exc())
             ret.append([_ord, float("nan")])
 
-    return np.array(ret)
+    ret = np.array(ret)
+    bmax = np.max(ret[:,1])
+    ret[:,1] = np.exp(ret[:,1] - bmax)
+
+    return ret
 
 
 def posterior_predictive_sampling(idata, num_pp_samples):
