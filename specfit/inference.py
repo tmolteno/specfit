@@ -52,10 +52,9 @@ def get_model(name, freq, mu, sigma, order, nu0):
     print(f"Mu max log: {np.log(mumax)}")
 
     means = [0.0 for i in range(0, order)]
-    sigmas = [0.5 for i in range(0, order)]
+    sigmas = [2.5 for i in range(0, order)]
     means[0] = np.log(mumax)
-    sigmas[0] = 1.5
-    sigmas[1] = 1
+    sigmas[0] = 2.5
 
     with pm.Model() as _model:
         _a = [pm.Normal(f"a[{i}]", mu=means[i], sigma=sigmas[i]) for i in range(order)]
@@ -65,7 +64,7 @@ def get_model(name, freq, mu, sigma, order, nu0):
 
         # Use a StudentT likelihood to deal with outliers 
         _likelihood = pm.StudentT("likelihood", nu=5, mu=_brightness,
-                                  sigma=np.array(sigma), observed=np.array(mu))
+                                  sigma=np.array(sigma), shape=_x.shape, observed=np.array(mu))
     return _model
 
 
@@ -140,12 +139,15 @@ def marginal_likelihood(name, freq,
     return ret
 
 
-def posterior_predictive_sampling(idata, num_pp_samples):
-    pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+def posterior_predictive_sampling(idata, model, num_pp_samples):
 
-    post = idata.posterior
+    with model:
+        pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+
+    # reduced_samples = az.extract(idata.posterior, num_samples=num_pp_samples)
+    # post = reduced_samples.posterior
+    post = az.extract(idata.posterior, num_samples=num_pp_samples)
     var_names = list(post.data_vars)
-    # pp_sample_ix = np.random.choice(total_pp_samples, size=num_pp_samples, replace=False)
 
     ret = {}
     for v in var_names:

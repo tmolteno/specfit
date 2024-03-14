@@ -53,13 +53,14 @@ if True:
     post = idata.posterior
     print(post.keys())
 
-    pp = sf.posterior_predictive_sampling(idata, 1000)
+    pp = sf.posterior_predictive_sampling(idata, model, 1000)
+    print(pp.keys())
 
     x = sp.Symbol('x', real=True)
     polys = None
     for k in pp.keys():
         n = int(k[2])
-        a = pp[k].to_numpy()[0,:]
+        a = pp[k].values
 
         print(a.shape)
         n_samples = len(a)

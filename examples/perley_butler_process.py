@@ -36,7 +36,7 @@ NU_0 = 1.0e9
 def process_bic(outfile, key, _S, _sigma, _frequency, order):
     global full_names
     official_name = full_names[key][0]
-    print(f"%%%%% Processing {key}", file=outfile, flush=True)
+    print(f"Processing {key}")
     nu0 = NU_0
     S, sigma, freq = cleanup(_S, _sigma, _frequency)
 
@@ -53,7 +53,7 @@ def process_bic(outfile, key, _S, _sigma, _frequency, order):
             print(f" &  \\bf{{{_b :5.4f}}} ", file=outfile, end='')
         else:
             print(f" &  {_b :5.4f} ", file=outfile, end='')
-    print('\\\\', file=outfile)
+    print('\\\\', file=outfile, flush=True)
 
 
 def process(outfile, key, _S, _sigma, _frequency, order):
@@ -86,10 +86,11 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     ax.plot(nu/1e9, sf.flux(nu, a, nu0), label='Polynomial model')
 
 
-    with mcmc_model:
-        #pm.set_data({'frequencies': nu})
-        ppc = pm.sample_posterior_predictive(idata, return_inferencedata=False,
-                                             var_names=['likelihood', 'frequencies'])
+    ppc = sf.sample_posterior_predictive(idata, model, num_pp_samples=2000)
+    # with mcmc_model:
+    #     #pm.set_data({'frequencies': nu})
+    #     ppc = pm.sample_posterior_predictive(idata, return_inferencedata=False, predictions=True,
+    #                                          var_names=['likelihood', 'frequencies'])
         
     print(ppc.keys())
     posterior_pred = ppc['likelihood'].mean(axis=0)   # Average over the chains
@@ -104,7 +105,7 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     print(f"y_mean: {y_mean.shape}")
     print(f"y_std: {y_std.shape}")
     
-    ax.plot(posterior_freq/1e9, y_mean, label='Posterior mean')
+    # ax.plot(posterior_freq/1e9, y_mean, label='Posterior mean')
     # ax.plot(nu/1e9, sf.flux(nu, y_mean, nu0), label='Posterior flux mean')
     ax.fill_between(posterior_freq/1e9, y_mean - 3*y_std, y_mean + 3*y_std, alpha=0.33, label='Uncertainty Interval ($\mu\pm3\sigma$)')
 
@@ -221,18 +222,18 @@ full_names = {
     '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
 }
 
-do_marginal_likelihood = True
+do_marginal_likelihood = False
 
 if do_marginal_likelihood:
     with open('perley_butler_bic.tex', 'w') as outfile:
         print("""
     \\begin{table}
         \\centering
-        \\caption{SMC estimates of the marginal likelihood $B_n$, of the model vs order $n$ for various sources.}
+        \\caption{SMC estimates of the relative marginal likelihood $B_n$, of the model vs order $n$ for various sources.}
         \\label{tab:marginal_likelihood}
     \\begin{tabular}{r|rrrrrrr}
         \\hline
-        Source & order &  $B_2$ & $B_3$ & $B_4$ & $B_5$ & $B_6$ \\\\
+        Source & $\nu$ (Ghz) & order &  $B_2$ & $B_3$ & $B_4$ & $B_5$ & $B_6$ \\\\
         \\hline
     """, file=outfile)
         for calibrator in stars:

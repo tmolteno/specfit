@@ -77,6 +77,7 @@ Now we can plot the data and show the results.
 ## Changelog
 
 - 0.4.0b1 Update the marginal_likelihood method to correctly no longer use inferenceData objects to avoid a bug in pymc.
+          Return the relative marginal likelihood (rather than the log marginal likelihood)
 - 0.3.0b3 Clean up to use the natural log throughout! (*IMPORTANT*)
           Use consistent way to get names of variables from the posterior
           Add machine readable hdf5 file output.
