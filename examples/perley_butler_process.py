@@ -86,7 +86,7 @@ def process(outfile, key, _S, _sigma, _frequency, order):
     ax.plot(nu/1e9, sf.flux(nu, a, nu0), label='Polynomial model')
 
 
-    ppc = sf.sample_posterior_predictive(idata, model, num_pp_samples=2000)
+    ppc = sf.posterior_predictive_sampling(idata, mcmc_model, num_pp_samples=2000)
     # with mcmc_model:
     #     #pm.set_data({'frequencies': nu})
     #     ppc = pm.sample_posterior_predictive(idata, return_inferencedata=False, predictions=True,
