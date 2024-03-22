@@ -5,8 +5,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc as pm
+import kmeans1d
 
 from patsy import dmatrix
+
+# Need patsy and python3-graphviz 
 
 RANDOM_SEED = 8927
 az.style.use("arviz-darkgrid")
@@ -39,20 +42,27 @@ x_data = np.log(freq/nu0)
 y_data = np.log(S)
 y_err = 0.01
 
-num_knots = 1
-knot_list = [x_data[0], x_data[np.argmax(S)], x_data[-1]]
+
+num_knots = 3
+
+clusters, centroids = kmeans1d.cluster(x_data, num_knots)
+print(clusters)
+print(centroids)
+
+knot_list = centroids
 # knot_list = np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
 print(f"Knot List: {knot_list}")
 
-spline_design = "bs(freq, df=4, degree=2, include_intercept=True) - 1"
+
+def get_spline_design(x_values):
+    spline_design = "bs(freq, knots=knots, degree=3, include_intercept=True) - 1"
+    return dmatrix(
+        spline_design,
+        {"freq": x_values, "knots": knot_list[1:-1]},
+    )
+
 test_freq = np.linspace(x_data[0], x_data[-1], 100)
-B = dmatrix(
-    spline_design,
-    {"freq": test_freq, "knots": knot_list[1:-1]},
-)
-
-# Check out the splines
-
+B = get_spline_design(test_freq)
 spline_df = (
     pd.DataFrame(B)
     .assign(freq=test_freq)
@@ -68,10 +78,7 @@ for i, c in enumerate(color):
 plt.legend(title="Spline Index", loc="upper center", fontsize=8, ncol=6);
 plt.show()
 
-B = dmatrix(
-    spline_design,
-    {"freq": x_data, "knots": knot_list[1:-1]},
-)
+B = get_spline_design(x_data)
 
 COORDS = {"splines": np.arange(B.shape[1]),
           "obs": range(len(y_data))
@@ -92,25 +99,42 @@ with spline_model:
     idata = pm.sample_prior_predictive()
     idata.extend(pm.sample(draws=1000, tune=3000, random_seed=RANDOM_SEED, chains=4))
     pm.sample_posterior_predictive(idata, extend_inferencedata=True)
-    
+
 print(idata.keys())
 print(az.summary(idata, var_names=[ "w"]))
 
 az.plot_trace(idata, var_names=[ "w"]);
 plt.show()
 
+## Pair Plots
+
+az.plot_pair(
+        idata,
+        var_names=['w'],
+        kind="hexbin",
+        filter_vars="like",
+        marginals=True,
+        figsize=(12, 12),
+    )
+plt.tight_layout()
+#plt.savefig(f"posterior_pairs.pdf")
+plt.show()
+
+#  Do some posterior sampling
 
 wp = idata.posterior["w"].mean(("chain", "draw")).values
 
+B = get_spline_design(test_freq)
+
 spline_df = (
     pd.DataFrame(B * wp.T)
-    .assign(freq=x_data)
+    .assign(freq=test_freq)
     .melt("freq", var_name="spline_i", value_name="value")
 )
 
 spline_df_merged = (
     pd.DataFrame(np.dot(B, wp.T))
-    .assign(freq=x_data)
+    .assign(freq=test_freq)
     .melt("freq", var_name="spline_i", value_name="value")
 )
 
