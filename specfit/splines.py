@@ -39,21 +39,23 @@ x_data = np.log(freq/nu0)
 y_data = np.log(S)
 y_err = 0.01
 
-num_knots = 3
-# knot_list = [x_data[0] + (x+1) * (x_data[-1] - x_data[0]) / (num_knots+1) for x in range(num_knots)]
-knot_list = np.linspace(x_data[0], x_data[-1], num_knots)
+num_knots = 1
+knot_list = [x_data[0], x_data[np.argmax(S)], x_data[-1]]
+# knot_list = np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
 print(f"Knot List: {knot_list}")
 
+spline_design = "bs(freq, df=4, degree=2, include_intercept=True) - 1"
+test_freq = np.linspace(x_data[0], x_data[-1], 100)
 B = dmatrix(
-    "bs(freq, knots=knots, degree=2, include_intercept=True) - 1",
-    {"freq": x_data, "knots": knot_list[1:-1]},
+    spline_design,
+    {"freq": test_freq, "knots": knot_list[1:-1]},
 )
 
 # Check out the splines
 
 spline_df = (
     pd.DataFrame(B)
-    .assign(freq=x_data)
+    .assign(freq=test_freq)
     .melt("freq", var_name="spline_i", value_name="value")
 )
 
@@ -66,19 +68,23 @@ for i, c in enumerate(color):
 plt.legend(title="Spline Index", loc="upper center", fontsize=8, ncol=6);
 plt.show()
 
+B = dmatrix(
+    spline_design,
+    {"freq": x_data, "knots": knot_list[1:-1]},
+)
 
 COORDS = {"splines": np.arange(B.shape[1]),
           "obs": range(len(y_data))
           }
 with pm.Model(coords=COORDS) as spline_model:
     # a = pm.Normal("a", 0, 3)
-    w = pm.Normal("w", mu=0, sigma=1, size=B.shape[1], dims="splines")
+    w = pm.Normal("w", mu=0, sigma=2, size=B.shape[1], dims="splines")
     # mu = pm.Deterministic("mu", a + pm.math.dot(np.asarray(B, order="F"), w.T))
-    mu = pm.Deterministic("mu",  pm.math.dot(np.asarray(B, order="F"), w.T))
     # sigma = pm.Exponential("sigma", 1)
+    mu = pm.Deterministic("mu",  pm.math.dot(np.asarray(B, order="F"), w.T))
     D = pm.Normal("D", mu=mu, sigma=y_err, observed=y_data, dims="obs")
-    
-    
+
+
 pm.model_to_graphviz(spline_model)
 plt.show()
 # 
@@ -120,5 +126,5 @@ plt.legend(title="Spline Index", loc="lower center", fontsize=8, ncol=6)
 plt.plot(x_data, y_data, 'o')
 for knot in knot_list:
     plt.gca().axvline(knot, color="grey", alpha=0.4);
-    
+
 plt.show()
