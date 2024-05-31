@@ -7,7 +7,6 @@ import specfit as sf
 import matplotlib.pyplot as plt
 import sympy as sp
 
-RANDOM_SEED = 8927
 az.style.use("arviz-darkgrid")
 
 
@@ -37,15 +36,17 @@ nu0=1.0e9
 order = 3
 
 name = "j1939-6342"
-mu = S
 sigma = delta_S
 
-spline_model = sf.get_spline_model(name, freq, mu, sigma, order, nu0=nu0)
+names, stats, a_cov, a_corr, idata, model = \
+        sf.spline_inference(name, freq, S, sigma, order, nu0)
 
-with spline_model:
-    idata = pm.sample_prior_predictive()
-    idata.extend(pm.sample(draws=1000, tune=3000, random_seed=RANDOM_SEED, chains=4))
-    pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+# spline_model = sf.get_spline_model(name, freq, mu, sigma, order, nu0=nu0)
+# 
+# with spline_model:
+#     idata = pm.sample_prior_predictive()
+#     idata.extend(pm.sample(draws=1000, tune=3000, random_seed=RANDOM_SEED, chains=4))
+#     pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
 print(idata.keys())
 print(az.summary(idata, var_names=[ "w"]))
@@ -72,33 +73,6 @@ plt.show()
 #  Do some posterior sampling
 sf.plot_spline_design(freq, order)
 
-wp = idata.posterior["w"].mean(("chain", "draw")).values
-
-B = get_spline_design(test_freq)
-
-spline_df = (
-    pd.DataFrame(B * wp.T)
-    .assign(freq=test_freq)
-    .melt("freq", var_name="spline_i", value_name="value")
-)
-
-spline_df_merged = (
-    pd.DataFrame(np.dot(B, wp.T))
-    .assign(freq=test_freq)
-    .melt("freq", var_name="spline_i", value_name="value")
-)
+sf.plot_spline(idata, freq, S, nu0, order)
 
 
-color = plt.cm.rainbow(np.linspace(0, 1, len(spline_df.spline_i.unique())))
-fig = plt.figure()
-for i, c in enumerate(color):
-    subset = spline_df.query(f"spline_i == {i}")
-    subset.plot("freq", "value", c=c, ax=plt.gca(), label=i)
-spline_df_merged.plot("freq", "value", c="black", lw=2, ax=plt.gca())
-plt.legend(title="Spline Index", loc="lower center", fontsize=8, ncol=6)
-
-plt.plot(x_data, y_data, 'o')
-for knot in knot_list:
-    plt.gca().axvline(knot, color="grey", alpha=0.4);
-
-plt.show()

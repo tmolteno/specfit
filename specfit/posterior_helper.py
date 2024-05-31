@@ -10,6 +10,8 @@ import pytensor.tensor as T
 import matplotlib.pyplot as plt
 
 
+RANDOM_SEED = 8927
+
 def log_flux(w, logw, a):
     logS = a[0]
     for i in range(1, len(a)):
@@ -75,27 +77,30 @@ def run_or_load(mcmc_model, fname,
                 n_samples=5000, n_tune=5000,
                 n_chains=4, cache=False):
     if cache is True and os.path.exists(fname):
-        ret = az.from_netcdf(fname)
+        idata = az.from_netcdf(fname)
     else:
         with mcmc_model:
-            if False:
-                advi = pm.ADVI()
-                tracker = pm.callbacks.Tracker(
-                    mean=advi.approx.mean.eval,  # callable that returns mean
-                    std=advi.approx.std.eval,  # callable that returns std
-                )
-                approx = advi.fit(n_samples, callbacks=[tracker])
-                ret = pm.sample(n_samples, init='advi+adapt_diag',
-                                tune=n_tune, chains=n_chains, start=approx,
-                                return_inferencedata=True,
-                                discard_tuned_samples=True)
-            else:
-                ret = pm.sample(n_samples, tune=n_tune, chains=n_chains,
-                                return_inferencedata=True,
-                                discard_tuned_samples=True)
+            idata = pm.sample(n_samples, tune=n_tune, chains=n_chains, 
+                              random_seed=RANDOM_SEED,
+                              return_inferencedata=True,
+                              discard_tuned_samples=True)
         if cache:
-            ret.to_netcdf(fname)
-    return ret
+            idata.to_netcdf(fname)
+    return idata
+
+def spline_run_or_load(spline_model, fname,
+                n_samples=5000, n_tune=5000,
+                n_chains=4, cache=False):
+    if cache is True and os.path.exists(fname):
+        idata = az.from_netcdf(fname)
+    else:
+        with spline_model:
+            idata = pm.sample_prior_predictive()
+            idata.extend(pm.sample(draws=n_samples, tune=n_tune, random_seed=RANDOM_SEED, chains=n_chains))
+            pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+        if cache:
+            idata.to_netcdf(fname)
+    return idata
 
 
 def row_2_table(outfile, row):
@@ -160,15 +165,18 @@ def vector_2_latex(outfile, a, names):
 
 
 def get_names(idata):
-    names = [k for k in idata.posterior.data_vars.keys()]
+    print(idata)
+    print(idata.keys())
+    print(idata.data_vars.keys())
+    names = [k for k in idata.data_vars.keys()]
     return names
 
 
 def get_stats(idata):
     names = get_names(idata)
 
-    ret = [np.array([idata.posterior.get(x).mean().values.tolist(),
-                    idata.posterior.get(x).std().values.tolist()]) for x in names]
+    ret = [np.array([idata.get(x).mean().values.tolist(),
+                    idata.get(x).std().values.tolist()]) for x in names]
     return np.array(ret).T, names
 
 
@@ -213,7 +221,7 @@ def full_column(outfile, all_names, idata, freq):
 def chain_covariance(idata):
     names = get_names(idata)
     chain = 0
-    a = [idata.posterior.get(n)[chain, :] for n in names]
+    a = [idata.get(n)[chain, :] for n in names]
     a = np.array(a)
     return np.cov(a), np.corrcoef(a), names
 

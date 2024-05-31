@@ -26,7 +26,6 @@ python-dateutil==2.8.2
 pytz==2023.3.post1
 scipy==1.11.3
 six==1.16.0
--e git+ssh://git@github.com/tmolteno/specfit@90eb3f72071ed03ec5c86e794a2c6dd26928c858#egg=specfit
 toolz==0.12.0
 typing_extensions==4.8.0
 tzdata==2023.3

@@ -163,8 +163,8 @@ def data_inference(name, freq, mu, sigma, order, nu0,
     _idata = run_or_load(_model, fname=f"idata_{name}.nc",
                          n_samples=n_samples, n_tune=n_samples)
 
-    a_cov, a_corr, names = chain_covariance(_idata)
-    stats, names = get_stats(_idata)
+    a_cov, a_corr, names = chain_covariance(_idata.posterior)
+    stats, names = get_stats(_idata.posterior)
 
     return names, stats, a_cov, a_corr, _idata, _model
 
@@ -206,7 +206,7 @@ def datafree_inference(name, freq_min, freq_max, nfreq, sigma, a, nu0):
     _idata = run_or_load(_model, fname=f"idata_{name}.nc",
                          n_samples=5000, n_tune=order*3000)
 
-    a_cov, a_corr, names = chain_covariance(_idata)
-    stats, names = get_stats(_idata)
+    a_cov, a_corr, names = chain_covariance(_idata.posterior)
+    stats, names = get_stats(_idata.posterior)
 
     return names, stats, a_cov, a_corr, f, flux_data
