@@ -17,29 +17,33 @@ from .posterior_helper import Tflux as flux
 RANDOM_SEED = 8927
 
 
-def get_knots(x_values, degree):
-    clusters, centroids = kmeans1d.cluster(x_values, degree)
+def get_knots(x_values):
+
+    clusters, centroids = kmeans1d.cluster(x_values, 4)
     print(clusters)
     print(centroids)
-    # knot_list = np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
 
-    knot_list = centroids
+    knot_list = np.array([x_values[0], 0, 1, x_values[-1]])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
+
+    # knot_list = centroids
     return knot_list
 
 
-def get_spline_design(x_values, degree):
+def get_spline_design(x_values, knot_list):
 
-    knot_list = get_knots(x_values, degree)
     print(f"Knot List: {knot_list}")
-
-    spline_design = f"bs(freq, knots=knots, degree={degree}, include_intercept=True) - 1"
+    degree = 3
+    spline_design = f"bs(freq, knots=knots, lower_bound=lb, upper_bound=ub, degree={degree})"
     return dmatrix(
         spline_design,
-        {"freq": x_values, "knots": knot_list[1:-1]},
+        {"freq": x_values,
+         "knots": knot_list[1:-2],
+         "lb": knot_list[0],
+         "ub": knot_list[-1]},
     )
 
 
-def get_spline_model(name, freq, mu, sigma, order, nu0):
+def get_spline_model(name, freq, mu, sigma, nu0):
     # mumax = np.max(mu)
     # print(f"Mu max: {mumax}")
     # print(f"Mu max log: {np.log(mumax)}")
@@ -63,7 +67,9 @@ def get_spline_model(name, freq, mu, sigma, order, nu0):
     y_data = np.log(mu)
     y_err = np.array(sigma)
 
-    B = get_spline_design(x_data, degree=order)
+    knot_list = get_knots(x_data)
+
+    B = get_spline_design(x_data, knot_list)
 
     COORDS = {
                 "splines": np.arange(B.shape[1]),
@@ -77,11 +83,11 @@ def get_spline_model(name, freq, mu, sigma, order, nu0):
         mu = pm.Deterministic("mu",  pm.math.dot(np.asarray(B, order="F"), w.T))
         D = pm.Normal("D", mu=mu, sigma=y_err, observed=y_data, dims="obs")
 
-    return _model
+    return _model, knot_list
 
 
-def spline_inference(name, freq, mu, sigma, order, nu0,
-                   n_samples=10000):
+def spline_inference(name, freq, mu, sigma, nu0,
+                   n_samples=1000):
     """Infer a spectral spline from original measurements
 
     Use Bayesian inference to infer the coefficients of a polynomial model for
@@ -106,10 +112,10 @@ def spline_inference(name, freq, mu, sigma, order, nu0,
     list
         a list of strings representing the header columns
     """
-    _model = get_spline_model(name, freq, mu, sigma, order, nu0=nu0)
-    _idata = spline_run_or_load(_model, fname=f"idata_{name}.nc",
+    _model, knot_list = get_spline_model(name, freq, mu, sigma, nu0=nu0)
+    _idata = spline_run_or_load(_model, fname=f"idata_{name}_{len(knot_list)}.nc",
                                 n_samples=n_samples, n_tune=n_samples,
-                                cache=True)
+                                cache=False)
 
     print(_idata.posterior.keys())
 
@@ -120,7 +126,7 @@ def spline_inference(name, freq, mu, sigma, order, nu0,
 
     stats, names = get_stats(_idata.posterior)
 
-    return names, stats, a_cov, a_corr, _idata, _model
+    return names, stats, a_cov, a_corr, _idata, _model, knot_list
 
 
 # x_data = np.log(freq/nu0)
@@ -139,10 +145,11 @@ def spline_inference(name, freq, mu, sigma, order, nu0,
 # print(f"Knot List: {knot_list}")
 # 
 
-def plot_spline_design(x_data, order):
+def plot_spline_design(freq, nu0, knot_list):
+    x_data = np.log(freq/nu0)
 
     test_freq = np.linspace(x_data[0], x_data[-1], 100)
-    B = get_spline_design(test_freq, degree=order)
+    B = get_spline_design(test_freq, knot_list)
     spline_df = (
         pd.DataFrame(B)
         .assign(freq=test_freq)
@@ -152,14 +159,16 @@ def plot_spline_design(x_data, order):
     color = plt.cm.magma(np.linspace(0, 0.80, len(spline_df.spline_i.unique())))
 
     fig = plt.figure()
+    ax = fig.add_subplot(1, 1, 1)
+
     for i, c in enumerate(color):
         subset = spline_df.query(f"spline_i == {i}")
-        subset.plot("freq", "value", c=c, ax=plt.gca(), label=i)
-    plt.legend(title="Spline Index", loc="upper center", fontsize=8, ncol=6);
+        subset.plot("freq", "value", c=c, ax=ax, label=i)
+    ax.legend(title="Spline Index", loc="upper center", fontsize=8, ncol=6);
     plt.show()
 
 
-def plot_spline(idata, freq, mu, nu0, degree):
+def plot_spline(idata, freq, mu, nu0, knot_list):
 
     x_data = np.log(freq/nu0)
     y_data = np.log(mu)
@@ -168,7 +177,7 @@ def plot_spline(idata, freq, mu, nu0, degree):
 
     wp = idata.posterior["w"].mean(("chain", "draw")).values
 
-    B = get_spline_design(test_freq, degree)
+    B = get_spline_design(test_freq, knot_list)
 
     spline_df = (
         pd.DataFrame(B * wp.T)
@@ -193,14 +202,12 @@ def plot_spline(idata, freq, mu, nu0, degree):
     spline_df_merged.plot("freq", "value", c="black", lw=2, ax=ax)
     ax.legend(title="Spline Index", loc="lower center", fontsize=8, ncol=6)
 
-    knot_list = get_knots(x_data, degree)
-
     ax.plot(x_data, y_data, 'o')
     for knot in knot_list:
         ax.axvline(knot, color="grey", alpha=0.4);
 
     plt.show()
-               
+
 # B = get_spline_design(x_data)
 # 
 # COORDS = {

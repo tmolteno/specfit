@@ -33,13 +33,12 @@ freq_ghz, S, delta_S = original_data.T
 freq = freq_ghz*1e9
 nu0=1.0e9
 
-order = 3
 
 name = "j1939-6342"
 sigma = delta_S
 
-names, stats, a_cov, a_corr, idata, model = \
-        sf.spline_inference(name, freq, S, sigma, order, nu0)
+names, stats, a_cov, a_corr, idata, model, knot_list = \
+        sf.spline_inference(name, freq, S, sigma, nu0)
 
 # spline_model = sf.get_spline_model(name, freq, mu, sigma, order, nu0=nu0)
 # 
@@ -58,6 +57,7 @@ plt.savefig(f"spline_trace.pdf")
 
 ## Pair Plots
 
+plt.clf()
 az.plot_pair(
         idata,
         var_names=['w'],
@@ -70,9 +70,10 @@ plt.tight_layout()
 plt.savefig(f"spline_posterior_pairs.pdf")
 plt.show()
 
-#  Do some posterior sampling
-sf.plot_spline_design(freq, order)
 
-sf.plot_spline(idata, freq, S, nu0, order)
+#  Do some posterior sampling
+sf.plot_spline_design(freq, nu0, knot_list)
+
+sf.plot_spline(idata, freq, S, nu0, knot_list)
 
 
