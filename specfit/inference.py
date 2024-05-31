@@ -11,38 +11,13 @@ import logging
 import os
 import traceback
 
-from .posterior_helper import get_stats, chain_covariance
+from .posterior_helper import get_stats, chain_covariance, run_or_load
 from .posterior_helper import Tflux as flux
 from .posterior_helper import flux as num_flux
 
 logger = logging.getLogger()
 
 
-def run_or_load(mcmc_model, fname,
-                n_samples=5000, n_tune=5000,
-                n_chains=4, cache=False):
-    if cache is True and os.path.exists(fname):
-        ret = az.from_netcdf(fname)
-    else:
-        with mcmc_model:
-            if False:
-                advi = pm.ADVI()
-                tracker = pm.callbacks.Tracker(
-                    mean=advi.approx.mean.eval,  # callable that returns mean
-                    std=advi.approx.std.eval,  # callable that returns std
-                )
-                approx = advi.fit(n_samples, callbacks=[tracker])
-                ret = pm.sample(n_samples, init='advi+adapt_diag',
-                                tune=n_tune, chains=n_chains, start=approx,
-                                return_inferencedata=True,
-                                discard_tuned_samples=True)
-            else:
-                ret = pm.sample(n_samples, tune=n_tune, chains=n_chains,
-                                return_inferencedata=True,
-                                discard_tuned_samples=True)
-        if cache:
-            ret.to_netcdf(fname)
-    return ret
 
 
 def get_model(name, freq, mu, sigma, order, nu0):

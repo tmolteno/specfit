@@ -14,6 +14,9 @@ requirements:
 example:
 	python3 examples/raw_j1939_6342.py
 
+spline:
+	python3 examples/spline_j1939.py
+
 lint:
 	pylint --extension-pkg-whitelist=numpy --ignored-modules=numpy,tart_tools,dask,dask.array --extension-pkg-whitelist=astropy --extension-pkg-whitelist=dask specfit
 

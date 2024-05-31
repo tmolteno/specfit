@@ -71,6 +71,33 @@ def Tflux(nu, a, nu0):
     return T.exp(logS)
 
 
+def run_or_load(mcmc_model, fname,
+                n_samples=5000, n_tune=5000,
+                n_chains=4, cache=False):
+    if cache is True and os.path.exists(fname):
+        ret = az.from_netcdf(fname)
+    else:
+        with mcmc_model:
+            if False:
+                advi = pm.ADVI()
+                tracker = pm.callbacks.Tracker(
+                    mean=advi.approx.mean.eval,  # callable that returns mean
+                    std=advi.approx.std.eval,  # callable that returns std
+                )
+                approx = advi.fit(n_samples, callbacks=[tracker])
+                ret = pm.sample(n_samples, init='advi+adapt_diag',
+                                tune=n_tune, chains=n_chains, start=approx,
+                                return_inferencedata=True,
+                                discard_tuned_samples=True)
+            else:
+                ret = pm.sample(n_samples, tune=n_tune, chains=n_chains,
+                                return_inferencedata=True,
+                                discard_tuned_samples=True)
+        if cache:
+            ret.to_netcdf(fname)
+    return ret
+
+
 def row_2_table(outfile, row):
     print("    ", end='', file=outfile)
     cols = len(row)
