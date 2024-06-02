@@ -19,27 +19,27 @@ RANDOM_SEED = 8927
 
 def get_knots(x_values):
 
-    clusters, centroids = kmeans1d.cluster(x_values, 4)
+    clusters, centroids = kmeans1d.cluster(x_values, 2)
     print(clusters)
     print(centroids)
 
-    knot_list = np.array([x_values[0], 0, 1, x_values[-1]])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
+    # knot_list = np.array([-0.3, -0.3, 0.5])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
 
-    # knot_list = centroids
+    knot_list = centroids
     return knot_list
 
 
-def get_spline_design(x_values, knot_list):
+def get_spline_design(x_values, y_values, knot_list):
 
     print(f"Knot List: {knot_list}")
-    degree = 3
-    spline_design = f"bs(freq, knots=knots, lower_bound=lb, upper_bound=ub, degree={degree})"
+    degree = 2
+    spline_design = f"bs(freq, knots=knots, degree={degree})"
+    spline_design = f"cr(freq, knots=knots) - max"
     return dmatrix(
         spline_design,
         {"freq": x_values,
-         "knots": knot_list[1:-2],
-         "lb": knot_list[0],
-         "ub": knot_list[-1]},
+         "knots": knot_list,
+         "max": np.max(y_values)},
     )
 
 
@@ -69,7 +69,7 @@ def get_spline_model(name, freq, mu, sigma, nu0):
 
     knot_list = get_knots(x_data)
 
-    B = get_spline_design(x_data, knot_list)
+    B = get_spline_design(x_data, y_data, knot_list)
 
     COORDS = {
                 "splines": np.arange(B.shape[1]),
@@ -145,11 +145,12 @@ def spline_inference(name, freq, mu, sigma, nu0,
 # print(f"Knot List: {knot_list}")
 # 
 
-def plot_spline_design(freq, nu0, knot_list):
+def plot_spline_design(freq, mu, nu0, knot_list):
     x_data = np.log(freq/nu0)
-
+    y_data = np.log(mu)
+    
     test_freq = np.linspace(x_data[0], x_data[-1], 100)
-    B = get_spline_design(test_freq, knot_list)
+    B = get_spline_design(test_freq, y_data, knot_list)
     spline_df = (
         pd.DataFrame(B)
         .assign(freq=test_freq)
@@ -177,7 +178,7 @@ def plot_spline(idata, freq, mu, nu0, knot_list):
 
     wp = idata.posterior["w"].mean(("chain", "draw")).values
 
-    B = get_spline_design(test_freq, knot_list)
+    B = get_spline_design(test_freq, y_data, knot_list)
 
     spline_df = (
         pd.DataFrame(B * wp.T)
