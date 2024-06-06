@@ -23,18 +23,18 @@ def get_knots(x_values):
     print(clusters)
     print(centroids)
 
-    # knot_list = np.array([-0.3, -0.3, 0.5])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
+    knot_list = np.array([-0.3, 1.2])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
 
-    knot_list = centroids
+    # knot_list = centroids
     return knot_list
 
 
 def get_spline_design(x_values, y_values, knot_list):
 
     print(f"Knot List: {knot_list}")
-    degree = 2
-    spline_design = f"bs(freq, knots=knots, degree={degree})"
-    spline_design = f"cr(freq, knots=knots) - max"
+    degree = 3
+    spline_design = f"bs(freq, knots=knots, degree={degree}) - max"
+    #spline_design = f"cr(freq, knots=knots) - max"
     return dmatrix(
         spline_design,
         {"freq": x_values,
@@ -81,7 +81,7 @@ def get_spline_model(name, freq, mu, sigma, nu0):
         # mu = pm.Deterministic("mu", a + pm.math.dot(np.asarray(B, order="F"), w.T))
         # sigma = pm.Exponential("sigma", 1)
         mu = pm.Deterministic("mu",  pm.math.dot(np.asarray(B, order="F"), w.T))
-        D = pm.Normal("D", mu=mu, sigma=y_err, observed=y_data, dims="obs")
+        D = pm.Normal("likelihood", mu=mu, sigma=y_err, observed=y_data, dims="obs")
 
     return _model, knot_list
 

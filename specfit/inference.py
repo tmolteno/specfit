@@ -121,7 +121,7 @@ def posterior_predictive_sampling(idata, model, num_pp_samples):
 
     # reduced_samples = az.extract(idata.posterior, num_samples=num_pp_samples)
     # post = reduced_samples.posterior
-    post = az.extract(idata.posterior, num_samples=num_pp_samples)
+    post = az.extract(idata.posterior_predictive, num_samples=num_pp_samples)
     var_names = list(post.data_vars)
 
     ret = {}
@@ -161,7 +161,8 @@ def data_inference(name, freq, mu, sigma, order, nu0,
     """
     _model = get_model(name, freq, mu, sigma, order, nu0=nu0)
     _idata = run_or_load(_model, fname=f"idata_{name}.nc",
-                         n_samples=n_samples, n_tune=n_samples)
+                         n_samples=n_samples, n_tune=n_samples,
+                         cache=True)
 
     a_cov, a_corr, names = chain_covariance(_idata.posterior)
     stats, names = get_stats(_idata.posterior)

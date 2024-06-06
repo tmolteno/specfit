@@ -3,7 +3,6 @@ import specfit as sf
 import matplotlib.pyplot as plt
 import sympy as sp
 
-
 # Data from J.E. Reynolds for J1939-6342
 original_data = np.array(
     [[0.408,  6.24, 0.312 ],

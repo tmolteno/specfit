@@ -72,7 +72,7 @@ plt.show()
 
 
 #  Do some posterior sampling
-sf.plot_spline_design(freq, nu0, knot_list)
+sf.plot_spline_design(freq, S, nu0, knot_list)
 
 sf.plot_spline(idata, freq, S, nu0, knot_list)
 

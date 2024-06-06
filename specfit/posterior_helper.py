@@ -165,9 +165,9 @@ def vector_2_latex(outfile, a, names):
 
 
 def get_names(idata):
-    print(idata)
-    print(idata.keys())
-    print(idata.data_vars.keys())
+    # print(idata)
+    # print(idata.keys())
+    # print(idata.data_vars.keys())
     names = [k for k in idata.data_vars.keys()]
     return names
 
@@ -188,12 +188,12 @@ def idata_2_latex(idata):
 
 def mean_2_latex(outfile, idata):
     names = get_names(idata)
-    data = [ [idata.posterior.get(x).mean().values.tolist(), idata.posterior.get(x).std().values.tolist()] for x in idata.posterior.mean() ]
+    data = [ [idata.get(x).mean().values.tolist(), idata.get(x).std().values.tolist()] for x in idata.mean() ]
     vector_2_latex(outfile, data, names)
 
 
 def get_random_sample(idata, chain=0):
-    names = get_names(idata)
+    names = get_names(idata.posterior)
     n_samples = idata.posterior.get(names[0]).values.shape[1]
     sample = np.random.randint(0,n_samples)
 
@@ -297,7 +297,7 @@ def posterior_plot(plt, name, freq, idata, nu0):
     ax.set_yscale("log", nonpositive='clip')
 
     ax.set_xlabel("Frequency (GHz)")
-    ax.set_ylabel("Flux (Jy))")
+    ax.set_ylabel("Flux (Jy)")
     ax.set_title(f"Posterior Spectrum PDF ({name})")
     ax.grid(True);
     return fig, ax
