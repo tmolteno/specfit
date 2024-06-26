@@ -23,7 +23,7 @@ def get_knots(x_values):
     print(clusters)
     print(centroids)
 
-    knot_list = np.array([-0.3, 1.2])     # np.linspace(x_data[0], x_data[-1], num_knots, endpoint=True)
+    knot_list = np.linspace(x_values[0], x_values[-1], 1, endpoint=False)
 
     # knot_list = centroids
     return knot_list

@@ -1,13 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
-plt.rcParams['axes.formatter.min_exponent'] = 2
 
 from astropy.io import fits
 # from astropy.wcs import WCS
 import specfit as sf
 
-import matplotlib.ticker as ticker
-from matplotlib.ticker import ScalarFormatter
 
 with fits.open('Abell22_full.fits') as hdul:
     print(hdul.info())
@@ -78,27 +75,27 @@ with fits.open('Abell22_full.fits') as hdul:
             ret = spline.regression(x, y)
             print(ret)
 
-            fig, ax = plt.subplots(figsize=(6,4), layout='constrained')
+            with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
+                fig, ax = plt.subplots(figsize=(6,4), layout='constrained')
 
-            ax.set_xscale("log", nonpositive='clip')
-            ax.set_yscale("log", nonpositive='clip')
+                ax.set_xscale("log", nonpositive='clip')
+                ax.set_yscale("log", nonpositive='clip')
 
 
-            ax.set_xlabel("Frequency (GHz)")
-            ax.set_ylabel("Flux (Jy)")
+                ax.set_xlabel("Frequency (GHz)")
+                ax.set_ylabel("Flux (Jy)")
 
-            knot_y = ret["knot_y"]
-            y_best = f(k_0=ret["interior_knots"][0], x=x_curve, y_0=knot_y[0],
-                    y_1=knot_y[1],
-                    y_2=knot_y[2])
+                knot_y = ret["knot_y"]
+                y_best = f(k_0=ret["interior_knots"][0], x=x_curve, y_0=knot_y[0],
+                        y_1=knot_y[1],
+                        y_2=knot_y[2])
 
-            ax.plot(np.exp(x_curve), np.exp(y_best), label="fit")
-            ax.errorbar(np.exp(x), np.exp(y), yerr=ES, fmt='o', label="data")
-            ax.set_title(name)
-            ax.grid(True)
-            ax.legend()
-            plt.savefig(f"{name}.pdf")
-            plt.show()
+                ax.plot(np.exp(x_curve), np.exp(y_best), label="fit")
+                ax.errorbar(np.exp(x), np.exp(y), yerr=ES, fmt='o', label="data")
+                ax.set_title(name)
+                ax.legend()
+                plt.savefig(f"{name}.pdf")
+                plt.show()
             break
         else:
             fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)

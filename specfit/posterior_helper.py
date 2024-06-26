@@ -255,16 +255,17 @@ def correction_matrix(idata, chain=0, sample=700):
 
 
 def dataplot(plt, name, freq, mu, sigma):
-    fig, ax = plt.subplots()
+    with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
+        fig, ax = plt.subplots()
 
-    ax.set_xscale("log", nonpositive='clip')
-    ax.set_yscale("log", nonpositive='clip')
-    ax.errorbar(np.array(freq)/1e9, np.array(mu), yerr=np.array(sigma), fmt='.', label="Original Data")
+        ax.set_xscale("log", nonpositive='clip')
+        ax.set_yscale("log", nonpositive='clip')
+        ax.errorbar(np.array(freq)/1e9, np.array(mu), yerr=np.array(sigma), fmt='.', label="Original Data")
 
-    ax.set_xlabel("Frequency (GHz)")
-    ax.set_ylabel("Flux (Jy)")
-    ax.grid(True)
-    ax.set_title(f"Flux Measurements: {name}");
+        ax.set_xlabel("Frequency (GHz)")
+        ax.set_ylabel("Flux (Jy)")
+        ax.grid(True)
+        ax.set_title(f"Flux Measurements: {name}");
     return fig, ax
 
 
