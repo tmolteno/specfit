@@ -65,14 +65,14 @@ with fits.open('Abell22_full.fits') as hdul:
             y = np.log(S)
             y0 = (S-ES/2)
             y1 = (S+ES/2)
-            asymmetric_error = [y0*0, y1]
+            y_sigma = np.log(y1) - y
             x_curve = np.linspace(x[0], x[-1], 100)
 
-            spline = sf.NaturalCubicSpline([x[0], x[-1]], n_interior_knots=1, degree=3)
+            spline = sf.NaturalCubicSpline([x[0], x[-1]], n_interior_knots=1, degree=1)
 
             f = spline.get_expr()
 
-            ret = spline.regression(x, y)
+            ret = spline.regression(x, y, y_sigma=y_sigma)
             print(ret)
 
             with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
@@ -96,7 +96,7 @@ with fits.open('Abell22_full.fits') as hdul:
                 ax.legend()
                 plt.savefig(f"{name}.pdf")
                 plt.show()
-            break
+            # break
         else:
             fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)
 

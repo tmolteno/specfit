@@ -3,8 +3,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
-## Cubic spline 
+'''
+    Natural Spline Fitting
+    
+    Author Tim Molteno tim@elec.ac.nz (c) 2024
+    
+    This code performs a spline regression to fit a spline to some data. The spline is natural 
+    in that the second derivative on the boundary is zero. The position of the interior knots is
+    a parameter in this code. 
 
+'''
 ## Changepoint pymc https://ckrapu.github.io/blog/2022/nonparametric-changepoint-model-pymc/
 ### https://causalpy.readthedocs.io/en/latest/notebooks/rkink_pymc.html
 
@@ -97,7 +105,8 @@ def natural_spline(x, knot_x, knot_y, degree):
 
 class NaturalCubicSpline:
     #
-    #   A natural cubic spline that can be evaluated using numpy, with unknown knot positions
+    #   A natural spline of degree n that can be evaluated using numpy, with unknown knot positions
+    #   TODO: The case degree 2 does not work
     #
     def __init__(self, interval, n_interior_knots, degree=3):
 
@@ -130,7 +139,7 @@ class NaturalCubicSpline:
         f = sp.lambdify(self.variables, self.expr, cse=True)
         return f
 
-    def regression(self, x_data, y_data):
+    def regression(self, x_data, y_data, y_sigma):
         # Calculate the best fit spline to match the data in a least squares sense
         expr = self.get_expr()
         # The arguments of expr, are in self.variables (in order), these are {k_i}, x, {y_i}
@@ -140,7 +149,9 @@ class NaturalCubicSpline:
             param = v[0:self.n_interior_knots].tolist()
             param.append(x_data)
             param.extend(v[self.n_interior_knots:].tolist())
-            residual = expr(*param) - y_data
+            residual = (expr(*param) - y_data)/y_sigma  
+            # This is weighted so that the residual is weighted by 1/sigma^2
+            # see https://en.wikipedia.org/wiki/Weighted_least_squares
             return np.sum(residual**2)
 
 
@@ -189,9 +200,9 @@ if __name__ == "__main__":
     f = spline.get_expr()
 
     x = np.linspace(-1,3,20)
-    y = np.sin(x)
+    y = np.sin(x)+np.random.uniform(size=(20,))
 
-    ret = spline.regression(x, y)
+    ret = spline.regression(x, y, y_sigma=0.1)
     print(ret)
 
     plt.plot(x, y, '.', label="data")
