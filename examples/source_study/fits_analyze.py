@@ -81,17 +81,16 @@ with fits.open('Abell22_full.fits') as hdul:
                 ax.set_xscale("log", nonpositive='clip')
                 ax.set_yscale("log", nonpositive='clip')
 
-
                 ax.set_xlabel("Frequency (GHz)")
-                ax.set_ylabel("Flux (Jy)")
+                ax.set_ylabel("Flux (mJy)")
 
                 knot_y = ret["knot_y"]
                 y_best = f(k_0=ret["interior_knots"][0], x=x_curve, y_0=knot_y[0],
                         y_1=knot_y[1],
                         y_2=knot_y[2])
 
-                ax.plot(np.exp(x_curve), np.exp(y_best), label="fit")
-                ax.errorbar(np.exp(x), np.exp(y), yerr=ES, fmt='o', label="data")
+                ax.plot(np.exp(x_curve), np.exp(y_best)*1000, label="fit")
+                ax.errorbar(np.exp(x), np.exp(y)*1000, yerr=ES, fmt='o', label="data")
                 ax.set_title(name)
                 ax.legend()
                 plt.savefig(f"{name}.pdf")
@@ -99,7 +98,6 @@ with fits.open('Abell22_full.fits') as hdul:
             # break
         else:
             fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)
-
 
         # ax.ticklabel_format(style='plain')
         # plt.plot(nu, S, '.')
