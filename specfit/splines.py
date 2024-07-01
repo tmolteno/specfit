@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc as pm
-import kmeans1d
+#import kmeans1d
 
 from patsy import dmatrix
 
@@ -19,9 +19,9 @@ RANDOM_SEED = 8927
 
 def get_knots(x_values):
 
-    clusters, centroids = kmeans1d.cluster(x_values, 2)
-    print(clusters)
-    print(centroids)
+#    clusters, centroids = kmeans1d.cluster(x_values, 2)
+#    print(clusters)
+#    print(centroids)
 
     knot_list = np.linspace(x_values[0], x_values[-1], 1, endpoint=False)
 
