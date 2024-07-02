@@ -5,6 +5,8 @@ from astropy.io import fits
 # from astropy.wcs import WCS
 import specfit as sf
 
+from piecewise_linear import piecewise_linear
+import arviz as az
 
 with fits.open('Abell22_full.fits') as hdul:
     print(hdul.info())
@@ -60,7 +62,7 @@ with fits.open('Abell22_full.fits') as hdul:
 
         name=f"Source RA:{todms(r)}, DEC:{todms(d)}"
 
-        if True:
+        if False:
             x = np.log(nu/nu0)
             y = np.log(S)
             y0 = (S-ES/2)
@@ -97,11 +99,11 @@ with fits.open('Abell22_full.fits') as hdul:
                 plt.show()
             # break
         else:
-            fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)
+            idata = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
 
-        # ax.ticklabel_format(style='plain')
-        # plt.plot(nu, S, '.')
-        # plt.title(f"Source RA:{r}, DEC:{d}")
-        # plt.xlabel('Frequency ()')
-        # plt.ylabel('Normalized flux')
-        plt.show()
+            with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
+                az.plot_trace(idata, var_names=["cps", "k", "m", "delta"])
+                plt.savefig(f"{name}_trace.pdf")
+                plt.show()
+
+            # fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)
