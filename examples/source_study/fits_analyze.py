@@ -52,7 +52,7 @@ if __name__ == "__main__":
         print(f"Flux Shape {total_flux.shape}")
 
         result_csv = []
-        header = "name, ra, dec, slopes, slopes_sigma, change_point, change_point_sigma"
+        header = "name, order, ra, dec, slopes, slopes_sigma, change_point, change_point_sigma, log_marginal_likelihood"
         result_csv.append(header)
         
         for i in range(len(ra)):
@@ -110,9 +110,8 @@ if __name__ == "__main__":
                 idata, json_data = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
                 json_data['ra'] = r
                 json_data['dec'] = d
-                
 
-                line = f"{json_data['name']}, {json_data['ra']}, {json_data['dec']}, {json_data['slopes']}, {json_data['slopes_sigma']}, {json_data['change_point']}, {json_data['change_point_sigma']}"
+                line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {json_data['slopes']}, {json_data['slopes_sigma']}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
                 result_csv.append(line)
 
                 with open("results.csv", 'w') as csv_file:

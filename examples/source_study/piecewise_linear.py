@@ -99,10 +99,23 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1):
         idata.extend(pm.sample(draws=n_samples, tune=n_tune,
                             random_seed=RANDOM_SEED,
                             chains=n_chains))
-        pm.sample_posterior_predictive(idata, extend_inferencedata=True)
+        smcidata = pm.sample_smc(draws=n_samples*order, # tune=n_tune,
+                            random_seed=RANDOM_SEED,
+                            chains=6)
+        # pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
-    
-    print(idata.posterior.keys())
+    # Capture the log_marginal_likelihood
+    chain_lml = np.array(smcidata.sample_stats["log_marginal_likelihood"])
+    print(chain_lml)
+    lml = [chain[-1] for chain in chain_lml]
+
+    # Compute the LOO model comparison 
+    # https://www.pymc.io/projects/docs/en/latest/learn/core_notebooks/model_comparison.html
+    with spline_model:
+        pm.compute_log_likelihood(idata)
+        loo = az.loo(idata)
+
+        print(loo)
 
     plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata)
 
@@ -110,14 +123,18 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1):
     print(summ)
     
     ret = get_posterior_model(idata, 1000)
+    print(ret)
     ret['summary'] = str(summ)
     ret['name'] = name
+    ret['order'] = order
+    ret['log_marginal_likelihood'] = np.mean(lml)
+    # ret['loo'] = loo
     
     with open(f"{name}.json", 'w') as json_file:
         json.dump(ret, json_file, indent=4, sort_keys=True)
   
     with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
-        az.plot_trace(idata, var_names=["cps", "k", "m", "delta"])
+        az.plot_trace(idata, var_names=["cps", "k", "m", "delta"], filter_vars="like")
         plt.savefig(f"{name}_trace.pdf")
         
         az.plot_pair(
@@ -237,12 +254,6 @@ if __name__ == "__main__":
         sigma = delta_S
         mu=S
 
-        idata = piecewise_linear(name, freq, mu, sigma, nu0, order=2)
-
-        az.plot_trace(idata, var_names=["cps", "k", "m", "delta"])
-        plt.show()
-        plt.savefig(f"{name}_trace.pdf")
-
-        ret = get_posterior_model(idata, 1000)
+        idata, ret = piecewise_linear(name, freq, mu, sigma, nu0, order=1)
         print(ret)
 
