@@ -1,8 +1,13 @@
 import numpy as np
+import matplotlib
+matplotlib.use('PDF')
+
 import matplotlib.pyplot as plt
 
 from astropy.io import fits
-# from astropy.wcs import WCS
+from astropy import units as u
+from astropy.coordinates import Angle
+
 import specfit as sf
 
 from piecewise_linear import piecewise_linear
@@ -61,10 +66,8 @@ if __name__ == "__main__":
             sigma = ES
 
             def todms(a):
-                deg = int(np.floor(a))
-                mm = int(np.floor((a - deg)*60))
-                sss = (a - deg - mm/60)
-                return f"{deg :02d}:{mm :02d}:{sss :04.2f}"
+                angle = Angle(a * u.deg) 
+                return angle.to_string(unit=u.degree)
 
             name=f"Source_RA:{todms(r)}_DEC:{todms(d)}"
 
@@ -102,32 +105,18 @@ if __name__ == "__main__":
                     ax.set_title(name)
                     ax.legend()
                     plt.savefig(f"{name}.pdf")
-                    # plt.show()
                 # break
             else:
                 idata, json_data = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
                 json_data['ra'] = r
                 json_data['dec'] = d
                 
-                with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
-                    az.plot_trace(idata, var_names=["cps", "k", "m", "delta"])
-                    plt.savefig(f"{name}_trace.pdf")
-                    
-                    az.plot_pair(
-                            idata.posterior,
-                            var_names=["cps", "k", "m", "delta"],
-                            kind="hexbin",
-                            filter_vars="like",
-                            marginals=True,
-                            figsize=(12, 12),
-                        );
-                    plt.savefig(f"{name}_posterior_pairs.pdf")
 
-                    line = f"{json_data['name']}, {json_data['ra']}, {json_data['dec']}, {json_data['slopes']}, {json_data['slopes_sigma']}, {json_data['change_point']}, {json_data['change_point_sigma']}"
-                    result_csv.append(line)
+                line = f"{json_data['name']}, {json_data['ra']}, {json_data['dec']}, {json_data['slopes']}, {json_data['slopes_sigma']}, {json_data['change_point']}, {json_data['change_point_sigma']}"
+                result_csv.append(line)
 
                 with open("results.csv", 'w') as csv_file:
                     for line in result_csv:
                         print(line, file=csv_file)
 
-                # fig, ax = sf.dataplot(plt, name=name, freq=nu, mu=S, sigma=ES)
+                del idata
