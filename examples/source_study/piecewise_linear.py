@@ -86,11 +86,12 @@ def plot_spline(name, freq, S, yerr, nu0, idata):
         # plt.show()
 
 
-def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1):
+def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000):
+    print(f"piecewise_linear(name=\"{name}\")")
     spline_model = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
 
-    n_samples = 3000
-    n_tune = 3000
+    
+    n_tune = n_samples
     RANDOM_SEED = 123
     n_chains = 4
 
@@ -99,22 +100,50 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1):
         idata.extend(pm.sample(draws=n_samples, tune=n_tune,
                             random_seed=RANDOM_SEED,
                             chains=n_chains))
-        smcidata = pm.sample_smc(draws=n_samples*order, # tune=n_tune,
-                            random_seed=RANDOM_SEED,
-                            chains=6)
+        # smcidata = pm.sample_smc(draws=n_samples*order, threshold=0.6,
+        #                     random_seed=RANDOM_SEED,
+        #                     chains=6)
         # pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
-    # Capture the log_marginal_likelihood
-    chain_lml = np.array(smcidata.sample_stats["log_marginal_likelihood"])
-    print(chain_lml)
-    lml = [chain[-1] for chain in chain_lml]
+#     # Capture the log_marginal_likelihood
+#     chain_lml = smcidata.sample_stats["log_marginal_likelihood"]
+# 
+#     # Process the ragged log_marginal_likelihood
+# 
+#     print(chain_lml.sizes)
+#     
+#     if chain_lml.sizes["chain"] != 6:
+#         print(f"Chain dimensions ragged {chain_lml.sizes}")
+#         chain_lml = chain_lml[0]
+#         print(chain_lml)
+#     
+#     lml_list = []
+#     for chain in chain_lml:
+#         chain_arr = np.array(chain).flatten()
+#         if (chain_arr.shape[0] == 1):
+#             chain_arr = chain_arr[0]
+#         last = chain_arr[-1]
+#         print(f"last: {last}")
+#         lml_list.append(last)
+#         
+#     # print(lml_list)
+    lml = sf.process_log_marginal_likelihood(spline_model, n_samples*order)
+    
+#     # da_stacked = chain_lml.stack(notnull=['chain','draw'])
+#     # chain_lml = da_stacked[da_stacked.notnull()] 
+#     # print(chain_lml)
+#     
+#     # chain_lml.to_netcdf(f"{name}.nc", mode="w")
+#     last_draw = chain_lml.tail({"draw":1})
+#     print(last_draw)
+#     lml = np.array(last_draw.mean())
+#     print(lml)
 
     # Compute the LOO model comparison 
     # https://www.pymc.io/projects/docs/en/latest/learn/core_notebooks/model_comparison.html
     with spline_model:
         pm.compute_log_likelihood(idata)
         loo = az.loo(idata)
-
         print(loo)
 
     plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata)
@@ -254,6 +283,6 @@ if __name__ == "__main__":
         sigma = delta_S
         mu=S
 
-        idata, ret = piecewise_linear(name, freq, mu, sigma, nu0, order=1)
+        idata, ret = piecewise_linear(name, freq, mu, sigma, nu0, order=2, n_samples=3000)
         print(ret)
 
