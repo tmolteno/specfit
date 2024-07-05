@@ -215,7 +215,7 @@ if __name__ == "__main__":
         '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
     }
 
-    do_marginal_likelihood = False
+    do_marginal_likelihood = True
 
     if do_marginal_likelihood:
         with open('perley_butler_bic.tex', 'w') as outfile:

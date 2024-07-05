@@ -196,8 +196,10 @@ def get_random_sample(idata, chain=0):
     names = get_names(idata.posterior)
     n_samples = idata.posterior.get(names[0]).values.shape[1]
     sample = np.random.randint(0,n_samples)
-
-    return [idata.posterior.get(n).values[chain, sample] for n in names]
+    ret = {} 
+    for n in names:
+        ret[n] = idata.posterior.get(n).values[chain, sample]
+    return ret
 
 
 

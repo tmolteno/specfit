@@ -43,6 +43,38 @@ def get_model(name, freq, mu, sigma, order, nu0):
     return _model
 
 
+def process_log_marginal_likelihood(smcmodel, n_samples):
+    """
+        Run the Sequential Monte Carlo sampling, and 
+        process the annoying ragged function that is returned 
+        by pymc
+    """
+    rng = np.random.default_rng(123)
+
+    with smcmodel:
+        smcidata = pm.sample_smc(draws=n_samples, threshold=0.6,
+                            random_seed=rng,
+                            chains=6)
+
+    chain_lml = smcidata.sample_stats["log_marginal_likelihood"]
+
+    # Process the ragged log_marginal_likelihood
+
+    if chain_lml.sizes["chain"] != 6:
+        chain_lml = chain_lml[0]
+    
+    lml_list = []
+    for chain in chain_lml:
+        chain_arr = np.array(chain).flatten()
+        if (chain_arr.shape[0] == 1):
+            chain_arr = chain_arr[0]
+        last = chain_arr[-1]
+        lml_list.append(last)
+        
+    lml = np.mean(lml_list)
+    return lml
+
+
 def marginal_likelihood(name, freq,
                         mu, sigma, nu0,
                         o_start=2, o_stop=6):
@@ -90,13 +122,14 @@ def marginal_likelihood(name, freq,
             _model = get_model(name, freq, mu, sigma, _ord, nu0=nu0)
             with _model:
 
-                trace = pm.sample_smc(draws=1500*_ord, kernel=pm.smc.kernels.IMH,
-                                        chains=6, threshold=0.6,
-                                        correlation_threshold=0.01,
-                                        random_seed=rng, return_inferencedata=False, progressbar=False)
-
-                lml = trace.report.log_marginal_likelihood
-                _evidence = np.mean([chain[-1] for chain in lml])
+                _evidence = process_log_marginal_likelihood(_model, 1500*_ord)
+                # trace = pm.sample_smc(draws=1500*_ord, kernel=pm.smc.kernels.IMH,
+                #                         chains=6, threshold=0.6,
+                #                         correlation_threshold=0.01,
+                #                         random_seed=rng, return_inferencedata=False, progressbar=False)
+                # 
+                # lml = trace.report.log_marginal_likelihood
+                # _evidence = np.mean([chain[-1] for chain in lml])
 
                 print(f"Log Marginal Likelihood: {_ord}:  {_evidence}")
 
