@@ -125,7 +125,6 @@ def process(outfile, official_names, key, _S, _sigma, _frequency, order):
             marginals=True,
             figsize=(12, 12),
         );
-    plt.tight_layout()
     plt.savefig(f"./output/{key}_posterior_pairs.pdf")
 
 
@@ -215,7 +214,7 @@ if __name__ == "__main__":
         '3C461': ['J2323+5848', '3C461', 'Cassiopeia A']
     }
 
-    do_marginal_likelihood = True
+    do_marginal_likelihood = False
 
     if do_marginal_likelihood:
         with open('perley_butler_bic.tex', 'w') as outfile:

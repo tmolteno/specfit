@@ -283,7 +283,8 @@ def posterior_plot(plt, name, freq, idata, nu0):
     freq = np.geomspace(min_freq, max_freq, num_freqs)
     bar_widths = np.geomspace(min_freq, max_freq, num_freqs+1)[0:-1] - np.geomspace(min_freq, max_freq, num_freqs+1)[1:]
     for n in freq:
-        samples = np.array([flux(n, get_random_sample(idata), nu0) for i in range(200)])
+        rs = get_random_sample(idata)
+        samples = np.array([flux(n, list(rs.values()), nu0) for i in range(200)])
         dataset.append(samples)
     #dataset = np.array(dataset)
 
