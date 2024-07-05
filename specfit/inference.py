@@ -141,8 +141,8 @@ def marginal_likelihood(name, freq,
             ret.append([_ord, float("nan")])
 
     ret = np.array(ret)
-    bmax = np.max(ret[:,1])
-    ret[:,1] = np.exp(ret[:,1] - bmax)
+    # bmax = np.max(ret[:,1])
+    # ret[:,1] = np.exp(ret[:,1] - bmax)
 
     return ret
 
