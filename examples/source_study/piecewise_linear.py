@@ -25,28 +25,40 @@ def get_spline_model(name, freq, S, sigma, nu0, order=1):
 
     y_err = np.array(sigma)
 
-    with pm.Model() as _model:
+    if (order == 0):
+        with pm.Model() as _model:
 
-        cps = pm.Uniform("cps",lower=norm_f[0], upper=norm_f[-1], size=order)
-        logcps = tt.log(cps)
-        A = cp_design_mat(x_data, logcps)
+            k = pm.Normal("k", mu=0, sigma=1)  # initial slope
+            m = pm.Normal("m", mu=0, sigma=1)  # offset
 
-        # the following are unknown parameters that you can estimate by giving 
-        # them priors and then sampling with NUTS
-        k = pm.Normal("k", mu=0, sigma=1)  # initial slope
-        m = pm.Normal("m", mu=0, sigma=1)  # offset
-        delta = pm.Normal("delta", mu=0, sigma=2, size=order) # slope parameters
+            logS = k*x_data + m
+            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err, 
+                        observed=S)
+        _var_names = ["k", "m"]
+    else:
+        with pm.Model() as _model:
 
-        # generate the function at x values
-        # y = (k + tt.dot(A, delta))*x + (m + tt.dot(A, -cps * delta))
+            cps = pm.Uniform("cps",lower=norm_f[0], upper=norm_f[-1], size=order)
+            logcps = tt.log(cps)
+            A = cp_design_mat(x_data, logcps)
 
-        # logS = pm.Deterministic("logS", (k + pm.math.dot(A, delta))*x_data +
-        #                       (m + pm.math.dot(A, -logcps * delta)))
-        logS = (k + pm.math.dot(A, delta))*x_data + (m + pm.math.dot(A, -logcps * delta))
-        D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err, 
-                      observed=S)
+            # the following are unknown parameters that you can estimate by giving 
+            # them priors and then sampling with NUTS
+            k = pm.Normal("k", mu=0, sigma=1)  # initial slope
+            m = pm.Normal("m", mu=0, sigma=1)  # offset
+            delta = pm.Normal("delta", mu=0, sigma=2, size=order) # slope parameters
 
-    return _model
+            # generate the function at x values
+            # y = (k + tt.dot(A, delta))*x + (m + tt.dot(A, -cps * delta))
+
+            # logS = pm.Deterministic("logS", (k + pm.math.dot(A, delta))*x_data +
+            #                       (m + pm.math.dot(A, -logcps * delta)))
+            logS = (k + pm.math.dot(A, delta))*x_data + (m + pm.math.dot(A, -logcps * delta))
+            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err, 
+                        observed=S)
+        _var_names = ["cps", "k", "m", "delta"]
+
+    return _model, _var_names
 
 def plot_spline(name, freq, S, yerr, nu0, idata):
     # x axis
@@ -68,15 +80,21 @@ def plot_spline(name, freq, S, yerr, nu0, idata):
         for i in range(n_samples):
             sample = sf.get_random_sample(idata)
 
-            cps = sample['cps']
-            k = sample['k']
-            m = sample['m']
-            delta = sample['delta']
+            try:
+                cps = sample['cps']
+                k = sample['k']
+                m = sample['m']
+                delta = sample['delta']
 
-            logcps = np.log(cps)
+                logcps = np.log(cps)
 
-            A = cp_design_mat(x_curve, logcps, module=np)
-            logS = (k + np.dot(A, delta))*x_curve + (m + np.dot(A, -logcps * delta))
+                A = cp_design_mat(x_curve, logcps, module=np)
+                logS = (k + np.dot(A, delta))*x_curve + (m + np.dot(A, -logcps * delta))
+            except:
+                k = sample['k']
+                m = sample['m']
+
+                logS = k*x_curve + m
 
             ax.plot(np.exp(x_curve), np.exp(logS)*y_scale, alpha=10/n_samples, color='k', linewidth=3)
         ax.errorbar(freq/nu0, S*y_scale, yerr=yerr*y_scale, fmt='o', label="data")
@@ -88,9 +106,9 @@ def plot_spline(name, freq, S, yerr, nu0, idata):
 
 def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000):
     print(f"piecewise_linear(name=\"{name}\")")
-    spline_model = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
+    spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
 
-    
+        
     n_tune = n_samples
     RANDOM_SEED = 123
     n_chains = 4
@@ -100,45 +118,10 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
         idata.extend(pm.sample(draws=n_samples, tune=n_tune,
                             random_seed=RANDOM_SEED,
                             chains=n_chains))
-        # smcidata = pm.sample_smc(draws=n_samples*order, threshold=0.6,
-        #                     random_seed=RANDOM_SEED,
-        #                     chains=6)
         # pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
-#     # Capture the log_marginal_likelihood
-#     chain_lml = smcidata.sample_stats["log_marginal_likelihood"]
-# 
-#     # Process the ragged log_marginal_likelihood
-# 
-#     print(chain_lml.sizes)
-#     
-#     if chain_lml.sizes["chain"] != 6:
-#         print(f"Chain dimensions ragged {chain_lml.sizes}")
-#         chain_lml = chain_lml[0]
-#         print(chain_lml)
-#     
-#     lml_list = []
-#     for chain in chain_lml:
-#         chain_arr = np.array(chain).flatten()
-#         if (chain_arr.shape[0] == 1):
-#             chain_arr = chain_arr[0]
-#         last = chain_arr[-1]
-#         print(f"last: {last}")
-#         lml_list.append(last)
-#         
-#     # print(lml_list)
-    lml = sf.process_log_marginal_likelihood(spline_model, n_samples*order)
+    lml = sf.process_log_marginal_likelihood(spline_model, n_samples)
     
-#     # da_stacked = chain_lml.stack(notnull=['chain','draw'])
-#     # chain_lml = da_stacked[da_stacked.notnull()] 
-#     # print(chain_lml)
-#     
-#     # chain_lml.to_netcdf(f"{name}.nc", mode="w")
-#     last_draw = chain_lml.tail({"draw":1})
-#     print(last_draw)
-#     lml = np.array(last_draw.mean())
-#     print(lml)
-
     # Compute the LOO model comparison 
     # https://www.pymc.io/projects/docs/en/latest/learn/core_notebooks/model_comparison.html
     with spline_model:
@@ -146,10 +129,11 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
         loo = az.loo(idata)
         print(loo)
 
-    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata)
 
-    summ = az.summary(idata, var_names=["cps", "k", "m", "delta"])
+    summ = az.summary(idata, var_names=var_names)
     print(summ)
+
+    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata)
     
     ret = get_posterior_model(idata, 1000)
     print(ret)
@@ -163,12 +147,12 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
         json.dump(ret, json_file, indent=4, sort_keys=True)
   
     with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
-        az.plot_trace(idata, var_names=["cps", "k", "m", "delta"], filter_vars="like")
+        az.plot_trace(idata, var_names=var_names, filter_vars="like")
         plt.savefig(f"{name}_trace.pdf")
         
         az.plot_pair(
                 idata.posterior,
-                var_names=["cps", "k", "m", "delta"],
+                var_names=var_names,
                 kind="hexbin",
                 filter_vars="like",
                 marginals=True,
@@ -200,31 +184,33 @@ def cps_2_slope(k, cps, delta):
     return slopes
 
 def get_posterior_model(idata, samples):
-    slope_array = []
-    cps_array = []
-    for i in range(samples):
-        sample = sf.get_random_sample(idata)
-
-        cps = sample['cps']
-        k = sample['k']
-        m = sample['m']
-        delta = sample['delta']
-
-        cps_array.append(cps)
-        slope_array.append(cps_2_slope(k, cps, delta))
-        
-    slope_array = np.array(slope_array)
-    cps_array = np.array(cps_array)
-    
-    print(f"slope_array {slope_array.shape}")
-    print(f"cps_array {cps_array.shape}")
-    
     ret = {}
-    ret['slopes'] = np.mean(slope_array, axis=0).tolist()
-    ret['slopes_sigma'] = np.std(slope_array, axis=0).tolist()
-    ret['change_point'] = np.mean(cps_array, axis=0).tolist()
-    ret['change_point_sigma'] = np.std(cps_array, axis=0).tolist()
-    
+    try:
+        slope_array = []
+        cps_array = []
+        for i in range(samples):
+            sample = sf.get_random_sample(idata)
+
+            cps = sample['cps']
+            k = sample['k']
+            m = sample['m']
+            delta = sample['delta']
+
+            cps_array.append(cps)
+            slope_array.append(cps_2_slope(k, cps, delta))
+            
+        slope_array = np.array(slope_array)
+        cps_array = np.array(cps_array)
+        
+        print(f"slope_array {slope_array.shape}")
+        print(f"cps_array {cps_array.shape}")
+        
+        ret['slopes'] = np.mean(slope_array, axis=0).tolist()
+        ret['slopes_sigma'] = np.std(slope_array, axis=0).tolist()
+        ret['change_point'] = np.mean(cps_array, axis=0).tolist()
+        ret['change_point_sigma'] = np.std(cps_array, axis=0).tolist()
+    except:
+        pass
     return ret
     
 if __name__ == "__main__":
