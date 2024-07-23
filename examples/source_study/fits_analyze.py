@@ -15,7 +15,6 @@ import arviz as az
 
 
 if __name__ == "__main__":
-        
     with fits.open('Abell22_full.fits') as hdul:
         print(hdul.info())
 
@@ -51,10 +50,18 @@ if __name__ == "__main__":
         print(f"Freq Shape {freq.shape}")
         print(f"Flux Shape {total_flux.shape}")
 
+        def vect2csv(a_list):
+            converted_list = [str(element) for element in a_list] 
+            return ", ".join(converted_list)
+
+        def vect2hdr(name, dim):
+            x = [f"{name}[{i}]" for i in range(dim)]
+            return vect2csv(x)
+
         result_csv = []
-        header = "name, order, ra, dec, slopes, slopes_sigma, change_point, change_point_sigma, log_marginal_likelihood"
+        header = f"name, order, ra, dec, {vect2hdr("slopes",2)},  {vect2hdr("slopes_sigma",2)}, change_point, change_point_sigma, log_marginal_likelihood"
         result_csv.append(header)
-        
+
         for i in range(len(ra)):
 
             r = ra[i]
@@ -111,7 +118,7 @@ if __name__ == "__main__":
                 json_data['ra'] = r
                 json_data['dec'] = d
 
-                line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {json_data['slopes']}, {json_data['slopes_sigma']}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
+                line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {vect2csv(json_data['slopes'])}, {vect2csv(json_data['slopes_sigma'])}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
                 result_csv.append(line)
 
                 with open("results.csv", 'w') as csv_file:

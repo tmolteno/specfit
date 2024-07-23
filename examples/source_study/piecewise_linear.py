@@ -60,23 +60,24 @@ def get_spline_model(name, freq, S, sigma, nu0, order=1):
 
     return _model, _var_names
 
-def plot_spline(name, freq, S, yerr, nu0, idata):
+def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
     # x axis
     
     x = np.log(freq/nu0)
     x_curve = np.linspace(x[0], x[-1], 1000)
     y_scale = 1000
-    
-    with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
-        fig, ax = plt.subplots(figsize=(6,4), layout='constrained')
 
+    with plt.rc_context({"axes.grid": True,
+                         "axes.grid.which": "both",
+                         "axes.formatter.min_exponent": 2}):
+
+        fig, ax = plt.subplots(figsize=(6, 4), layout='constrained')
         ax.set_xscale("log", nonpositive='clip')
         ax.set_yscale("log", nonpositive='clip')
 
         ax.set_xlabel("Frequency (GHz)")
         ax.set_ylabel("Flux (mJy)")
 
-        n_samples = 300
         for i in range(n_samples):
             sample = sf.get_random_sample(idata)
 
@@ -100,7 +101,7 @@ def plot_spline(name, freq, S, yerr, nu0, idata):
         ax.errorbar(freq/nu0, S*y_scale, yerr=yerr*y_scale, fmt='o', label="data")
         ax.set_title(name)
         # ax.legend()
-        plt.savefig(f"{name}.pdf")
+        plt.savefig(f"{name}_{n_samples}.pdf")
         # plt.show()
 
 
@@ -133,7 +134,8 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
     summ = az.summary(idata, var_names=var_names)
     print(summ)
 
-    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata)
+    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=500)
+    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=0)
     
     ret = get_posterior_model(idata, 1000)
     print(ret)
