@@ -7,7 +7,7 @@ import pandas as pd
 import pymc as pm
 #import kmeans1d
 
-from patsy import dmatrix
+# from patsy import dmatrix
 
 from .posterior_helper import get_stats, chain_covariance,  spline_run_or_load
 from .posterior_helper import Tflux as flux

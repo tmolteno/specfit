@@ -365,7 +365,7 @@ ax.set_xscale("log", nonpositive='clip')
 ax.set_yscale("log", nonpositive='clip')
 ax.plot(nu_new, b_pb, c="k", alpha=0.4, label="Reynolds (1994)")
 ax.plot(nu_new, b_new, '-.', c="g", alpha=1, label="This work")
-ax.plot(nu_new, np.abs(b_new-b_pb), c="r", alpha=1, label='difference $\Delta S$')
+ax.plot(nu_new, np.abs(b_new-b_pb), c="r", alpha=1, label='difference $\\Delta S$')
 ax.plot(nu, measured_data, 'o', c="b", alpha=1, label="Measurements")
 
 ax.legend()

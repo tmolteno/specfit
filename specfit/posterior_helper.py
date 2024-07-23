@@ -202,7 +202,6 @@ def get_random_sample(idata, chain=0):
     return ret
 
 
-
 def full_column(outfile, all_names, idata, freq):
     a_cov, a_corr, names = chain_covariance(idata)
 
@@ -257,8 +256,10 @@ def correction_matrix(idata, chain=0, sample=700):
 
 
 def dataplot(plt, name, freq, mu, sigma):
-    with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
-        fig, ax = plt.subplots()
+    with plt.rc_context({"axes.grid": True,
+                         "axes.grid.which": "both",
+                         "axes.formatter.min_exponent": 2}):
+        fig, ax = plt.subplots(layout='constrained')
 
         ax.set_xscale("log", nonpositive='clip')
         ax.set_yscale("log", nonpositive='clip')
