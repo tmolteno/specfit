@@ -271,13 +271,13 @@ plt.savefig('posterior_pairs_J1939.pdf')
 # In[14]:
 
 
-a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939)
+a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939.posterior)
 np.set_printoptions(precision=4, suppress=False)
 a_cov
-stats, names = posterior_helper.get_stats(idata_j1939)
+stats, names = posterior_helper.get_stats(idata_j1939.posterior)
 
 with h5py.File('calibrator_catalogue.hdf5', 'a') as f:
-    grp = f.create_group("J1939-6342")
+    grp = f.require_group("J1939-6342")
     ds_mean = grp.create_dataset("mean", data=stats[0])
     ds_sdev = grp.create_dataset("sdev", data=stats[1])
     ds_cov = grp.create_dataset("cov", data=a_cov)
@@ -425,7 +425,7 @@ plt.savefig('posterior_spectrum_j1939.pdf')
 ## Now sample from a multivariate gaussian of the polynomial model
 order=4
 mean = [ idata_j1939.posterior.mean().get(f"a[{i}]").values.tolist() for i in range(order)]
-a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939)
+a_cov, a_corr, names = posterior_helper.chain_covariance(idata_j1939.posterior)
 print(mean)
 print(a_cov)
 samples_cov = np.random.multivariate_normal(mean, a_cov, 100)
