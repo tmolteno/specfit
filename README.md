@@ -76,6 +76,7 @@ Now we can plot the data and show the results.
 
 ## Changelog
 
+- 0.5.0b2 Move to hatchling as the build system, add pyproject.toml.
 - 0.5.0b1 Add spline fits, and piecewise linear fits. (WORK IN PROGRESS). Add a new function for processing marginal likelihood.
 - 0.4.0b1 Update the marginal_likelihood method to correctly no longer use inferenceData objects to avoid a bug in pymc.
           Return the relative marginal likelihood (rather than the log marginal likelihood)

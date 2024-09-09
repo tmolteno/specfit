@@ -6,7 +6,7 @@
 # NOTE You should use an appropriate virtual environment to install and develop this.
 
 develop:
-	pip3 install -e .
+	python -m pip install --editable .
 
 requirements:
 	pip3 freeze > requirements.txt
