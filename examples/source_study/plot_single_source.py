@@ -3,7 +3,8 @@ import json
 import numpy as np
 import pymc as pm
 
-from piecewise_linear import get_spline_model, get_posterior_samples, evaluate_spline
+from piecewise_linear import get_spline_model, get_posterior_samples
+from piecewise_linear import evaluate_spline
 
 
 if __name__ == "__main__":
@@ -23,15 +24,16 @@ if __name__ == "__main__":
     spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0,
                                                order=order)
 
-    RANDOM_SEED = 123
-
     with spline_model:
         idata = pm.sample_prior_predictive()
         idata.extend(pm.sample(draws=3000, tune=3000,
-                               random_seed=RANDOM_SEED,
+                               random_seed=123,
                                chains=4))
 
-    samples = get_posterior_samples(idata, 1000)
+    # Get 1000 samples from the posterior
+    samples = get_posterior_samples(idata, 10)
+    print(samples.keys())
+
     x = np.log(freq/nu0)
     x_curve = np.linspace(x[0], x[-1], 1000)
     y_scale = 1000
@@ -50,12 +52,11 @@ if __name__ == "__main__":
         ax.set_ylabel("Flux (mJy)")
 
         for i in range(n_samples):
-
             try:
-                k = samples['k']
-                m = samples['m']
-                cps = samples['cps']
-                delta = samples['delta']
+                k = samples['k'][i]
+                m = samples['m'][i]
+                cps = samples['cps'][i]
+                delta = samples['delta'][i]
 
                 logS = evaluate_spline(x_curve, cps, k, m, delta)
             except Exception as e:
@@ -64,9 +65,11 @@ if __name__ == "__main__":
 
             ax.plot(np.exp(x_curve), np.exp(logS)*y_scale,
                     alpha=10/n_samples, color='k', linewidth=3)
+
+        # Plot the actual data with error bars
         ax.errorbar(freq/nu0, S*y_scale, yerr=sigma*y_scale,
                     fmt='o', label="data")
         ax.set_title(name)
         # ax.legend()
-        plt.savefig(f"{name}_{n_samples}.pdf")
+        plt.savefig("test_output.pdf")
         plt.show()
