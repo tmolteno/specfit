@@ -18,7 +18,7 @@ if __name__ == "__main__":
     freq = np.array(data['nu'])
     S = np.array(data['S'])
     sigma = np.array(data['sigma'])
-    order = 2
+    order = 1
     nu0 = data['nu0']
 
     spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0,
@@ -45,7 +45,7 @@ if __name__ == "__main__":
                          "axes.formatter.min_exponent": 2}):
 
         fig, ax = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax.set_xscale("log", nonpositive='clip')
+        # ax.set_xscale("log", nonpositive='clip')
         ax.set_yscale("log", nonpositive='clip')
 
         ax.set_xlabel("Frequency (GHz)")

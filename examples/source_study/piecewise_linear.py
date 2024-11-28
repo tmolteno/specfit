@@ -1,6 +1,4 @@
 import json
-import matplotlib
-matplotlib.use('PDF')
 
 import concurrent.futures
 
@@ -13,10 +11,10 @@ import arviz as az
 import specfit as sf
 
 
-
 # helper function
 def cp_design_mat(x, cps, module=tt):
     return (0.5 * (1.0 + module.sign(module.tile(x[:, None], (1, cps.shape[0])) - cps)))
+
 
 def get_spline_model(name, freq, S, sigma, nu0, order=1):
 
@@ -32,8 +30,8 @@ def get_spline_model(name, freq, S, sigma, nu0, order=1):
             m = pm.Normal("m", mu=0, sigma=1)  # offset
 
             logS = k*x_data + m
-            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err, 
-                        observed=S)
+            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS),
+                            sigma=y_err, observed=S)
         _var_names = ["k", "m"]
     else:
         with pm.Model() as _model:
@@ -54,15 +52,25 @@ def get_spline_model(name, freq, S, sigma, nu0, order=1):
             # logS = pm.Deterministic("logS", (k + pm.math.dot(A, delta))*x_data +
             #                       (m + pm.math.dot(A, -logcps * delta)))
             logS = (k + pm.math.dot(A, delta))*x_data + (m + pm.math.dot(A, -logcps * delta))
-            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err, 
-                        observed=S)
+            D = pm.StudentT("likelihood", nu=5, mu=tt.exp(logS), sigma=y_err,
+                            observed=S)
         _var_names = ["cps", "k", "m", "delta"]
 
     return _model, _var_names
 
+
+def evaluate_spline(f_values, cps, k, m, delta):
+    logcps = np.log(cps)
+
+    A = cp_design_mat(f_values, logcps, module=np)
+    logS = (k + np.dot(A, delta))*f_values + (m + np.dot(A, -logcps * delta))
+
+    return logS
+
+
 def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
     # x axis
-    
+
     x = np.log(freq/nu0)
     x_curve = np.linspace(x[0], x[-1], 1000)
     y_scale = 1000
@@ -87,10 +95,7 @@ def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
                 m = sample['m']
                 delta = sample['delta']
 
-                logcps = np.log(cps)
-
-                A = cp_design_mat(x_curve, logcps, module=np)
-                logS = (k + np.dot(A, delta))*x_curve + (m + np.dot(A, -logcps * delta))
+                logS = evaluate_spline(x_curve, cps, k, m, delta)
             except:
                 k = sample['k']
                 m = sample['m']
@@ -109,7 +114,6 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
     print(f"piecewise_linear(name=\"{name}\")")
     spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
 
-        
     n_tune = n_samples
     RANDOM_SEED = 123
     n_chains = 4
@@ -122,7 +126,7 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
         # pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
     lml = sf.process_log_marginal_likelihood(spline_model, n_samples)
-    
+
     # Compute the LOO model comparison 
     # https://www.pymc.io/projects/docs/en/latest/learn/core_notebooks/model_comparison.html
     with spline_model:
@@ -130,28 +134,27 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
         loo = az.loo(idata)
         print(loo)
 
-
     summ = az.summary(idata, var_names=var_names)
     print(summ)
 
     plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=500)
     plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=0)
-    
-    ret = get_posterior_model(idata, 1000)
+
+    ret = get_posterior_samples(idata, 1000)
     print(ret)
     ret['summary'] = str(summ)
     ret['name'] = name
     ret['order'] = order
     ret['log_marginal_likelihood'] = np.mean(lml)
     # ret['loo'] = loo
-    
+
     with open(f"{name}.json", 'w') as json_file:
         json.dump(ret, json_file, indent=4, sort_keys=True)
-  
+
     with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
         az.plot_trace(idata, var_names=var_names, filter_vars="like")
         plt.savefig(f"{name}_trace.pdf")
-        
+
         az.plot_pair(
                 idata.posterior,
                 var_names=var_names,
@@ -164,11 +167,12 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
 
     return idata, ret
 
+
 def piecewise_linear(*args, **kwargs):
     with concurrent.futures.ProcessPoolExecutor(max_workers=1) as executor:
         future = executor.submit(inner_piecewise_linear, *args, **kwargs)
         return future.result()
-    
+
 
 def cps_2_slope(k, cps, delta):
     n = len(cps)
@@ -180,17 +184,29 @@ def cps_2_slope(k, cps, delta):
         # print(f"slope = {slope}, x < {c}")
         slopes.append(slope)
         slope = slope + ds
-    
+
     # print(f"slope = {slope}, x > {c}")
     slopes.append(slope)
     return slopes
 
-def get_posterior_model(idata, samples):
+
+def get_posterior_samples(idata, n_samples):
+    '''
+        @param n_samples: The number of samples to return
+        @param idata: The inference data object
+
+        Return  samples from the posterior distribution of the model fit.
+        @return a dict containing the samples, as well as some statistics of these
+    '''
     ret = {}
     try:
         slope_array = []
         cps_array = []
-        for i in range(samples):
+        k_array = []
+        m_array = []
+        delta_array = []
+
+        for i in range(n_samples):
             sample = sf.get_random_sample(idata)
 
             cps = sample['cps']
@@ -198,23 +214,37 @@ def get_posterior_model(idata, samples):
             m = sample['m']
             delta = sample['delta']
 
+            slopes = cps_2_slope(k, cps, delta)
+
+            m_array.append(m)
+            k_array.append(k)
+            delta_array.append(delta)
             cps_array.append(cps)
-            slope_array.append(cps_2_slope(k, cps, delta))
-            
+            slope_array.append(slopes)
+
         slope_array = np.array(slope_array)
         cps_array = np.array(cps_array)
-        
+
         print(f"slope_array {slope_array.shape}")
         print(f"cps_array {cps_array.shape}")
-        
+
+        ret['slope'] = slope_array.tolist()
+        ret['cps'] = cps_array.tolist()
+        ret['k'] = k_array
+        ret['m'] = m_array
+        ret['delta'] = delta_array
+
         ret['slopes'] = np.mean(slope_array, axis=0).tolist()
         ret['slopes_sigma'] = np.std(slope_array, axis=0).tolist()
         ret['change_point'] = np.mean(cps_array, axis=0).tolist()
         ret['change_point_sigma'] = np.std(cps_array, axis=0).tolist()
-    except:
+        ret['n_samples'] = len(k_array)
+    except Exception as e:
+        print(f"Exception {e}")
         pass
     return ret
-    
+
+
 if __name__ == "__main__":
 
     if False:

@@ -1,6 +1,7 @@
+import json
+
 import numpy as np
 import matplotlib
-matplotlib.use('PDF')
 
 import matplotlib.pyplot as plt
 
@@ -12,6 +13,8 @@ import specfit as sf
 
 from piecewise_linear import piecewise_linear
 import arviz as az
+
+matplotlib.use('PDF')
 
 
 if __name__ == "__main__":
@@ -76,8 +79,20 @@ if __name__ == "__main__":
                 angle = Angle(a * u.deg) 
                 return angle.to_string(unit=u.degree)
 
-            name=f"Source_RA:{todms(r)}_DEC:{todms(d)}"
+            name = f"Source_RA:{todms(r)}_DEC:{todms(d)}"
+            # Dump the raw data for the source to a json file.
+            raw_data = {
+                'nu': nu.tolist(),
+                'S': S.tolist(),
+                'sigma': ES.tolist(),
+                'nu0': nu0,
+                'ra': r,
+                'dev': d
+                }
+            with open(f"data_{name}.json", 'w') as data_file:
+                print(json.dumps(raw_data, indent=4), file=data_file)
 
+            continue
             if False:
                 x = np.log(nu/nu0)
                 y = np.log(S)
