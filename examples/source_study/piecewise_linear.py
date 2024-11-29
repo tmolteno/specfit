@@ -1,5 +1,5 @@
 import json
-
+import traceback
 import concurrent.futures
 
 import numpy as np
@@ -110,7 +110,15 @@ def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
         # plt.show()
 
 
-def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000):
+def treetype(x):
+    if isinstance(x, list):
+        return f"{type(x)} -> {treetype(x[0])}"
+    else:
+        return f"{type(x)}"
+
+
+def inner_piecewise_linear(name, freq, S, sigma, nu0,
+                           order=1, n_samples=3000):
     print(f"piecewise_linear(name=\"{name}\")")
     spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
 
@@ -141,12 +149,14 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0, order=1, n_samples = 3000)
     plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=0)
 
     ret = get_posterior_samples(idata, 1000)
-    print(ret)
+
     ret['summary'] = str(summ)
     ret['name'] = name
     ret['order'] = order
-    ret['log_marginal_likelihood'] = np.mean(lml)
-    # ret['loo'] = loo
+    ret['log_marginal_likelihood'] = float(np.mean(lml))
+
+    for k in ret.keys():
+        print(k, treetype(ret[k]))
 
     with open(f"{name}.json", 'w') as json_file:
         json.dump(ret, json_file, indent=4, sort_keys=True)
@@ -216,8 +226,8 @@ def get_posterior_samples(idata, n_samples):
 
             slopes = cps_2_slope(k, cps, delta)
 
-            m_array.append(m)
-            k_array.append(k)
+            m_array.append(float(m))
+            k_array.append(float(k))
             delta_array.append(delta)
             cps_array.append(cps)
             slope_array.append(slopes)
@@ -225,15 +235,11 @@ def get_posterior_samples(idata, n_samples):
         slope_array = np.array(slope_array)
         cps_array = np.array(cps_array)
 
-        print(f"slope_array {slope_array.shape}")
-        print(f"cps_array {cps_array.shape}")
-
         ret['slope'] = slope_array.tolist()
         ret['cps'] = cps_array.tolist()
-        ret['k'] = k_array
-        ret['m'] = m_array
-        ret['delta'] = delta_array
-
+        ret['k'] = np.array(k_array).tolist()
+        ret['m'] = np.array(m_array).tolist()
+        ret['delta'] = np.array(delta_array).tolist()
         ret['slopes'] = np.mean(slope_array, axis=0).tolist()
         ret['slopes_sigma'] = np.std(slope_array, axis=0).tolist()
         ret['change_point'] = np.mean(cps_array, axis=0).tolist()
@@ -241,6 +247,7 @@ def get_posterior_samples(idata, n_samples):
         ret['n_samples'] = len(k_array)
     except Exception as e:
         print(f"Exception {e}")
+        print(traceback.format_exc())
         pass
     return ret
 

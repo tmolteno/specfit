@@ -2,6 +2,8 @@ import matplotlib.pyplot as plt
 import json
 import numpy as np
 import pymc as pm
+import argparse
+
 
 from piecewise_linear import get_spline_model, get_posterior_samples
 from piecewise_linear import evaluate_spline
@@ -9,6 +11,7 @@ from piecewise_linear import evaluate_spline
 
 if __name__ == "__main__":
 
+    
     name = "data_Source_RA:4d30m20.69878782s_DEC:-25d40m58.29839961s.json"
     print(f"Loading data from (name=\"{name}\")")
 

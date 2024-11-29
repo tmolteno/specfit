@@ -54,7 +54,7 @@ if __name__ == "__main__":
         print(f"Flux Shape {total_flux.shape}")
 
         def vect2csv(a_list):
-            converted_list = [str(element) for element in a_list] 
+            converted_list = [str(element) for element in a_list]
             return ", ".join(converted_list)
 
         def vect2hdr(name, dim):
@@ -92,7 +92,6 @@ if __name__ == "__main__":
             with open(f"data_{name}.json", 'w') as data_file:
                 print(json.dumps(raw_data, indent=4), file=data_file)
 
-            continue
             if False:
                 x = np.log(nu/nu0)
                 y = np.log(S)
