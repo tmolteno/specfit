@@ -61,7 +61,16 @@ def process_json_file(name, nu, S, ES, nu0):
     json_data['ra'] = r
     json_data['dec'] = d
 
-    line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {vect2csv(json_data['slopes'])}, {vect2csv(json_data['slopes_sigma'])}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
+    line = json_data['name']
+    for key in ['order', 'ra', 'dec', 'slopes', 'slopes_sigma', 
+                'change_point', 'change_point_sigma',
+                'log_marginal_likelihood']:
+        item = json_data[key]
+        if isinstance(item, list):
+            line = line + f", {vect2csv(item)}"
+        else:
+            line = line + f", {item}"
+
     result_csv.append(line)
 
     with open("results.csv", 'w') as csv_file:
