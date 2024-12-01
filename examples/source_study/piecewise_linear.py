@@ -1,4 +1,5 @@
 import json
+import os
 import traceback
 import concurrent.futures
 
@@ -68,7 +69,7 @@ def evaluate_spline(f_values, cps, k, m, delta):
     return logS
 
 
-def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
+def plot_spline(name, freq, S, yerr, nu0, idata, n_samples, output_dir):
     # x axis
 
     x = np.log(freq/nu0)
@@ -96,7 +97,7 @@ def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
                 delta = sample['delta']
 
                 logS = evaluate_spline(x_curve, cps, k, m, delta)
-            except:
+            except Exception:
                 k = sample['k']
                 m = sample['m']
 
@@ -106,7 +107,7 @@ def plot_spline(name, freq, S, yerr, nu0, idata, n_samples=300):
         ax.errorbar(freq/nu0, S*y_scale, yerr=yerr*y_scale, fmt='o', label="data")
         ax.set_title(name)
         # ax.legend()
-        plt.savefig(f"{name}_{n_samples}.pdf")
+        plt.savefig(os.path.join(output_dir, f"{name}_{n_samples}.pdf"))
         # plt.show()
 
 
@@ -118,9 +119,10 @@ def treetype(x):
 
 
 def inner_piecewise_linear(name, freq, S, sigma, nu0,
-                           order=1, n_samples=3000):
+                           order, output_dir, n_samples):
     print(f"piecewise_linear(name=\"{name}\")")
-    spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0, order=order)
+    spline_model, var_names = get_spline_model(name, freq, S, sigma, nu0=nu0, 
+                                               order=order)
 
     n_tune = n_samples
     RANDOM_SEED = 123
@@ -129,8 +131,8 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0,
     with spline_model:
         idata = pm.sample_prior_predictive()
         idata.extend(pm.sample(draws=n_samples, tune=n_tune,
-                            random_seed=RANDOM_SEED,
-                            chains=n_chains))
+                               random_seed=RANDOM_SEED,
+                               chains=n_chains))
         # pm.sample_posterior_predictive(idata, extend_inferencedata=True)
 
     lml = sf.process_log_marginal_likelihood(spline_model, n_samples)
@@ -145,8 +147,10 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0,
     summ = az.summary(idata, var_names=var_names)
     print(summ)
 
-    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=500)
-    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata, n_samples=0)
+    plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata,
+                n_samples=500, output_dir=output_dir)
+    # plot_spline(name, freq=freq, S=S, yerr=sigma, nu0=nu0, idata=idata,
+    #             n_samples=0, out)
 
     ret = get_posterior_samples(idata, 1000)
 
@@ -158,12 +162,14 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0,
     for k in ret.keys():
         print(k, treetype(ret[k]))
 
-    with open(f"{name}.json", 'w') as json_file:
+    outfile = os.path.join(output_dir, f"{name}_processed.json")
+
+    with open(outfile, 'w') as json_file:
         json.dump(ret, json_file, indent=4, sort_keys=True)
 
     with plt.rc_context({"axes.grid": True, "figure.constrained_layout.use": True}):
         az.plot_trace(idata, var_names=var_names, filter_vars="like")
-        plt.savefig(f"{name}_trace.pdf")
+        plt.savefig(os.path.join(output_dir, f"{name}_trace.pdf"))
 
         az.plot_pair(
                 idata.posterior,
@@ -173,7 +179,7 @@ def inner_piecewise_linear(name, freq, S, sigma, nu0,
                 marginals=True,
                 figsize=(12, 12),
             );
-        plt.savefig(f"{name}_posterior_pairs.pdf")
+        plt.savefig(os.path.join(output_dir, f"{name}_posterior_pairs.pdf"))
 
     return idata, ret
 

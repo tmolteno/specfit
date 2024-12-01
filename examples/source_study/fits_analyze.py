@@ -20,7 +20,7 @@ from piecewise_linear import piecewise_linear
 matplotlib.use('PDF')
 
 
-def process_natural_cubic(name, nu, S, ES, nu0):
+def process_natural_cubic(name, nu, S, ES, nu0, output_dir):
     x = np.log(nu/nu0)
     y = np.log(S)
     y0 = (S-ES/2)
@@ -56,13 +56,17 @@ def process_natural_cubic(name, nu, S, ES, nu0):
         plt.savefig(f"{name}.pdf")
 
 
-def process_json_file(name, nu, S, ES, nu0):
-    idata, json_data = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
+def process_json_file(name, nu, S, ES, nu0, output_dir):
+    idata, json_data = piecewise_linear(name, freq=nu, S=S,
+                                        sigma=ES, nu0=nu0, 
+                                        order=1,
+                                        n_samples=3000,
+                                        output_dir=output_dir)
     json_data['ra'] = r
     json_data['dec'] = d
 
     line = json_data['name']
-    for key in ['order', 'ra', 'dec', 'slopes', 'slopes_sigma', 
+    for key in ['order', 'ra', 'dec', 'slopes', 'slopes_sigma',
                 'change_point', 'change_point_sigma',
                 'log_marginal_likelihood']:
         item = json_data[key]
@@ -171,9 +175,9 @@ if __name__ == "__main__":
                 'dev': d
                 }
 
-            outfile = os.path.join(ARGS.output_dir, f"data_{name}.json")
+            outfile = os.path.join(ARGS.output_dir, f"{name}_data.json")
             with open(outfile, 'w') as data_file:
                 print(json.dumps(raw_data, indent=4), file=data_file)
 
             if ARGS.process:
-                process_json_file(name, nu, S, ES, nu0)
+                process_json_file(name, nu, S, ES, nu0, output_dir=ARGS.output_dir)

@@ -8,7 +8,7 @@ The FITS file is split into a separate JSON file for each source. This is done u
 
     python3 fits_analyze.py --fits="" --output-dir="output"
 
-It will generate a separate JSON file for each target. For example, here is a single target output:
+It will generate a separate JSON file (with ending ```_data.json```) for each target. For example, here is a single target output:
 
 ```
 {
@@ -70,4 +70,4 @@ This code shows how to manually plot (rather than using specfit to plot). The co
 draws samples from the spectral fit, and plots them using matplotlib. Use this code as a base when you want
 to control the plotting process for your own publications.
 
-    python3 plot_single_source.py --json="ouput/data_Source_RA:4d30m20.69878782s_DEC:-25d40m58.29839961s.json"
+    python3 plot_single_source.py --json="ouput/Source_RA:4d30m20.69878782s_DEC:-25d40m58.29839961s_data.json"
