@@ -86,11 +86,15 @@ It will asl create files in the output directory for each source. An example is
 ```
 The _data.json file contains the original data, the _processed.json contains the result of the inference, as well some samples. The graphs are:
 
+![xxx_500](https://github.com/user-attachments/assets/5cd1ece0-7c7a-40fb-9fd8-24f7f308c236)
+
+![xxx_posterior_pairs](https://github.com/user-attachments/assets/6ce86529-914a-452a-bfdb-a5fd00ca81ee)
+
 * _500.pdf: a posterior plot of 500 samples
 * _trace.pdf: a MCMC diagnostic plot showing the traces
 * _posterior_pairs.pdf: A plot showing how the fitted parameters are correlated.
 
-
+ 
 
 
 ## Plotting a single result
