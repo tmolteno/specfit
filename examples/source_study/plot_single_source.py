@@ -57,8 +57,7 @@ if __name__ == "__main__":
                          "axes.formatter.min_exponent": 2}):
 
         fig, ax = plt.subplots(figsize=(6, 4), layout='constrained')
-        # ax.set_xscale("log", nonpositive='clip')
-        ax.set_yscale("log", nonpositive='clip')
+        # ax.set_yscale("log", nonpositive='clip')
 
         ax.set_xlabel("Frequency (GHz)")
         ax.set_ylabel("Flux (mJy)")
