@@ -143,7 +143,7 @@ if __name__ == "__main__":
             return vect2csv(x)
 
         result_csv = []
-        header = f"name, order, ra, dec, {vect2hdr("slopes",2)},  {vect2hdr("slopes_sigma",2)}, change_point, change_point_sigma, log_marginal_likelihood"
+        header = f'name, order, ra, dec, {vect2hdr("slopes_mean",2)},  {vect2hdr("slopes_sigma",2)}, change_point_mean, change_point_sigma, log_marginal_likelihood'
         result_csv.append(header)
 
         for i in range(len(ra)):
