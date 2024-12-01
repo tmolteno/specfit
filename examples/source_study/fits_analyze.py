@@ -1,4 +1,6 @@
 import json
+import argparse
+import os
 
 import numpy as np
 import matplotlib
@@ -11,14 +13,84 @@ from astropy.coordinates import Angle
 
 import specfit as sf
 
+from pathlib import Path
+
 from piecewise_linear import piecewise_linear
-import arviz as az
 
 matplotlib.use('PDF')
 
 
+def process_natural_cubic(name, nu, S, ES, nu0):
+    x = np.log(nu/nu0)
+    y = np.log(S)
+    y0 = (S-ES/2)
+    y1 = (S+ES/2)
+    y_sigma = np.log(y1) - y
+    x_curve = np.linspace(x[0], x[-1], 100)
+
+    spline = sf.NaturalCubicSpline([x[0], x[-1]], n_interior_knots=1, degree=1)
+
+    f = spline.get_expr()
+
+    ret = spline.regression(x, y, y_sigma=y_sigma)
+    print(ret)
+
+    with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
+        fig, ax = plt.subplots(figsize=(6,4), layout='constrained')
+
+        ax.set_xscale("log", nonpositive='clip')
+        ax.set_yscale("log", nonpositive='clip')
+
+        ax.set_xlabel("Frequency (GHz)")
+        ax.set_ylabel("Flux (mJy)")
+
+        knot_y = ret["knot_y"]
+        y_best = f(k_0=ret["interior_knots"][0], x=x_curve, y_0=knot_y[0],
+                   y_1=knot_y[1],
+                   y_2=knot_y[2])
+
+        ax.plot(np.exp(x_curve), np.exp(y_best)*1000, label="fit")
+        ax.errorbar(np.exp(x), np.exp(y)*1000, yerr=ES, fmt='o', label="data")
+        ax.set_title(name)
+        ax.legend()
+        plt.savefig(f"{name}.pdf")
+
+
+def process_json_file(name, nu, S, ES, nu0):
+    idata, json_data = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
+    json_data['ra'] = r
+    json_data['dec'] = d
+
+    line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {vect2csv(json_data['slopes'])}, {vect2csv(json_data['slopes_sigma'])}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
+    result_csv.append(line)
+
+    with open("results.csv", 'w') as csv_file:
+        for line in result_csv:
+            print(line, file=csv_file)
+
+    del idata
+
+
 if __name__ == "__main__":
-    with fits.open('Abell22_full.fits') as hdul:
+
+    parser = argparse.ArgumentParser(description='Plot single piecewise fit.')
+
+    parser.add_argument('--fits', required=True,
+                        help="Spectral FITS file.")
+
+    parser.add_argument('--process', action="store_true",
+                        help="Process each file.")
+
+    parser.add_argument('--output-dir', required=False, default="output",
+                        help="Output directory.")
+
+    ARGS = parser.parse_args()
+
+    fits_file = ARGS.fits   # "'Abell22_full.fits'"
+
+    Path(ARGS.output_dir).mkdir(parents=True, exist_ok=True)
+
+    with fits.open(fits_file) as hdul:
         print(hdul.info())
 
         data = hdul[0].data
@@ -89,54 +161,10 @@ if __name__ == "__main__":
                 'ra': r,
                 'dev': d
                 }
-            with open(f"data_{name}.json", 'w') as data_file:
+
+            outfile = os.path.join(ARGS.output_dir, f"data_{name}.json")
+            with open(outfile, 'w') as data_file:
                 print(json.dumps(raw_data, indent=4), file=data_file)
 
-            if False:
-                x = np.log(nu/nu0)
-                y = np.log(S)
-                y0 = (S-ES/2)
-                y1 = (S+ES/2)
-                y_sigma = np.log(y1) - y
-                x_curve = np.linspace(x[0], x[-1], 100)
-
-                spline = sf.NaturalCubicSpline([x[0], x[-1]], n_interior_knots=1, degree=1)
-
-                f = spline.get_expr()
-
-                ret = spline.regression(x, y, y_sigma=y_sigma)
-                print(ret)
-
-                with plt.rc_context({"axes.grid": True, "axes.formatter.min_exponent": 2}):
-                    fig, ax = plt.subplots(figsize=(6,4), layout='constrained')
-
-                    ax.set_xscale("log", nonpositive='clip')
-                    ax.set_yscale("log", nonpositive='clip')
-
-                    ax.set_xlabel("Frequency (GHz)")
-                    ax.set_ylabel("Flux (mJy)")
-
-                    knot_y = ret["knot_y"]
-                    y_best = f(k_0=ret["interior_knots"][0], x=x_curve, y_0=knot_y[0],
-                            y_1=knot_y[1],
-                            y_2=knot_y[2])
-
-                    ax.plot(np.exp(x_curve), np.exp(y_best)*1000, label="fit")
-                    ax.errorbar(np.exp(x), np.exp(y)*1000, yerr=ES, fmt='o', label="data")
-                    ax.set_title(name)
-                    ax.legend()
-                    plt.savefig(f"{name}.pdf")
-                # break
-            else:
-                idata, json_data = piecewise_linear(name, freq=nu, S=S, sigma=ES, nu0=nu0)
-                json_data['ra'] = r
-                json_data['dec'] = d
-
-                line = f"{json_data['name']}, {json_data['order']}, {json_data['ra']}, {json_data['dec']}, {vect2csv(json_data['slopes'])}, {vect2csv(json_data['slopes_sigma'])}, {json_data['change_point']}, {json_data['change_point_sigma']}, {json_data['log_marginal_likelihood']}"
-                result_csv.append(line)
-
-                with open("results.csv", 'w') as csv_file:
-                    for line in result_csv:
-                        print(line, file=csv_file)
-
-                del idata
+            if ARGS.process:
+                process_json_file(name, nu, S, ES, nu0)

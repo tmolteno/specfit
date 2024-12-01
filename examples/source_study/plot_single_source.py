@@ -11,8 +11,17 @@ from piecewise_linear import evaluate_spline
 
 if __name__ == "__main__":
 
-    
-    name = "data_Source_RA:4d30m20.69878782s_DEC:-25d40m58.29839961s.json"
+    parser = argparse.ArgumentParser(description='Plot single piecewise fit.')
+
+    parser.add_argument('--json', required=False, default=None,
+                        help="Spectral JSON file (saved from fits_analyze).")
+
+    parser.add_argument('--samples', required=False, type=int, default=100,
+                        help="Number of samples to plot.")
+
+    ARGS = parser.parse_args()
+
+    name = ARGS.json   # "data_Source_RA:4d30m20.69878782s_DEC:-25d40m58.29839961s.json"
     print(f"Loading data from (name=\"{name}\")")
 
     with open(name, 'r') as file:
@@ -33,8 +42,8 @@ if __name__ == "__main__":
                                random_seed=123,
                                chains=4))
 
-    # Get 1000 samples from the posterior
-    samples = get_posterior_samples(idata, 10)
+    # Get samples from the posterior
+    samples = get_posterior_samples(idata, ARGS.samples)
     print(samples.keys())
 
     x = np.log(freq/nu0)
