@@ -66,6 +66,16 @@ It will generate a separate JSON file (with ending ```_data.json```) for each ta
 
 This will generate a summary file called results.csv.
 
+Each entry contains the following information.
+```
+name,   order,  ra,     dec,        slopes_mean[0], slopes_mean[1], slopes_sigma[0],    slopes_sigma[1], change_point_mean, change_point_sigma, log_marginal_likelihood
+mysrc,  1,      5.8,    -25.60754,  -0.9960,        0.2186,         0.3804380,          0.868589,        1.36818,           0.153093,           66.73931992842937
+```
+The slopes_mean, and slopes_sigma are the mean and standard deviation of the spectral index. The change point mean and sigma are the fairly self explanatory.
+
+
+### Output files and what they mena
+
 It will asl create files in the output directory for each source. An example is
 ```
 -rw-r--r-- 1 tim tim  31432 Dec  1 20:32 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_500.pdf
@@ -77,7 +87,7 @@ It will asl create files in the output directory for each source. An example is
 The _data.json file contains the original data, the _processed.json contains the result of the inference, as well some samples. The graphs are:
 
 * _500.pdf: a posterior plot of 500 samples
-* _trace.pdf: a posterior plot of 500 samples
+* _trace.pdf: a MCMC diagnostic plot showing the traces
 * _posterior_pairs.pdf: A plot showing how the fitted parameters are correlated.
 
 

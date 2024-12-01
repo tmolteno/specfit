@@ -81,7 +81,7 @@ def plot_spline(name, freq, S, yerr, nu0, idata, n_samples, output_dir):
                          "axes.formatter.min_exponent": 2}):
 
         fig, ax = plt.subplots(figsize=(6, 4), layout='constrained')
-        ax.set_xscale("log", nonpositive='clip')
+        # ax.set_xscale("log", nonpositive='clip')
         ax.set_yscale("log", nonpositive='clip')
 
         ax.set_xlabel("Frequency (GHz)")
