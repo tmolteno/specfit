@@ -64,6 +64,25 @@ It will generate a separate JSON file (with ending ```_data.json```) for each ta
 
     python3 fits_analyze.py --fits="" --output-dir="output" --process
 
+This will generate a summary file called results.csv.
+
+It will asl create files in the output directory for each source. An example is
+```
+-rw-r--r-- 1 tim tim  31432 Dec  1 20:32 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_500.pdf
+-rw-r--r-- 1 tim tim   1173 Dec  1 20:31 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_data.json
+-rw-r--r-- 1 tim tim  52713 Dec  1 20:32 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_posterior_pairs.pdf
+-rw-r--r-- 1 tim tim 247226 Dec  1 20:32 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_processed.json
+-rw-r--r-- 1 tim tim 538555 Dec  1 20:32 Source_RA:5d49m16.79490091s_DEC:-25d36m27.14634248s_trace.pdf
+```
+The _data.json file contains the original data, the _processed.json contains the result of the inference, as well some samples. The graphs are:
+
+* _500.pdf: a posterior plot of 500 samples
+* _trace.pdf: a posterior plot of 500 samples
+* _posterior_pairs.pdf: A plot showing how the fitted parameters are correlated.
+
+
+
+
 ## Plotting a single result
 
 This code shows how to manually plot (rather than using specfit to plot). The code performs a fit, and then
